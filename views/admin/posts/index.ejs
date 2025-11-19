@@ -1,0 +1,256 @@
+<%- layout('layouts/admin') %>
+
+<div class="container-fluid py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>Quản Lý Bài Viết</h2>
+    <a href="/admin/posts/create" class="btn btn-primary">
+      <i class="fas fa-plus me-2"></i>Tạo bài viết
+    </a>
+  </div>
+
+  <!-- Filters -->
+  <div class="card shadow-sm mb-4">
+    <div class="card-body">
+      <div class="row g-3">
+        <div class="col-md-3">
+          <input type="text" class="form-control" id="searchInput" placeholder="Tìm kiếm bài viết...">
+        </div>
+        <div class="col-md-2">
+          <select class="form-select" id="statusFilter">
+            <option value="">Tất cả trạng thái</option>
+            <option value="published">Đã xuất bản</option>
+            <option value="draft">Nháp</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <select class="form-select" id="categoryFilter">
+            <option value="">Tất cả chuyên mục</option>
+            <option value="health_tips">Mẹo Sức Khỏe</option>
+            <option value="news">Tin Tức</option>
+            <option value="disease_info">Thông Tin Bệnh</option>
+            <option value="doctor_advice">Lời Khuyên Bác Sĩ</option>
+            <option value="lifestyle">Lối Sống</option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <button class="btn btn-primary w-100" onclick="filterPosts()">
+            <i class="fas fa-search me-2"></i>Lọc
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Posts Table -->
+  <div class="card shadow-sm">
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table table-hover">
+          <thead>
+            <tr>
+              <th width="60">ID</th>
+              <th>Tiêu đề</th>
+              <th width="150">Chuyên mục</th>
+              <th width="120">Tác giả</th>
+              <th width="100">Trạng thái</th>
+              <th width="120">Ngày tạo</th>
+              <th width="150">Thao tác</th>
+            </tr>
+          </thead>
+          <tbody id="postsTableBody">
+            <tr>
+              <td colspan="7" class="text-center py-4">
+                <div class="spinner-border text-primary" role="status">
+                  <span class="visually-hidden">Loading...</span>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      <nav aria-label="Page navigation" class="mt-3">
+        <ul class="pagination justify-content-center" id="pagination"></ul>
+      </nav>
+    </div>
+  </div>
+</div>
+
+<script>
+let currentPage = 1;
+let totalPages = 1;
+
+// Load posts on page load
+document.addEventListener('DOMContentLoaded', () => {
+  loadPosts();
+});
+
+async function loadPosts(page = 1) {
+  currentPage = page;
+  
+  const search = document.getElementById('searchInput')?.value || '';
+  const status = document.getElementById('statusFilter')?.value || '';
+  const category = document.getElementById('categoryFilter')?.value || '';
+
+  const params = new URLSearchParams({
+    page,
+    limit: 20,
+    ...(search && { search }),
+    ...(status && { status }),
+    ...(category && { category })
+  });
+
+  try {
+    const response = await fetch(`/admin/posts?${params}`);
+    const result = await response.json();
+
+    if (result.success) {
+      renderPosts(result.data);
+      renderPagination(result.metadata);
+    } else {
+      document.getElementById('postsTableBody').innerHTML = `
+        <tr><td colspan="7" class="text-center text-danger">Lỗi tải dữ liệu</td></tr>
+      `;
+    }
+  } catch (error) {
+    console.error('Load posts error:', error);
+    document.getElementById('postsTableBody').innerHTML = `
+      <tr><td colspan="7" class="text-center text-danger">Lỗi kết nối</td></tr>
+    `;
+  }
+}
+
+function renderPosts(posts) {
+  const tbody = document.getElementById('postsTableBody');
+  
+  if (!posts || posts.length === 0) {
+    tbody.innerHTML = `
+      <tr><td colspan="7" class="text-center text-muted">Không có bài viết nào</td></tr>
+    `;
+    return;
+  }
+
+  const categoryNames = {
+    health_tips: 'Mẹo Sức Khỏe',
+    news: 'Tin Tức',
+    disease_info: 'Thông Tin Bệnh',
+    doctor_advice: 'Lời Khuyên Bác Sĩ',
+    lifestyle: 'Lối Sống'
+  };
+
+  tbody.innerHTML = posts.map(post => `
+    <tr>
+      <td>${post.id}</td>
+      <td>
+        <div class="d-flex align-items-center">
+          ${post.thumbnail ? `
+            <img src="${post.thumbnail}" class="rounded me-2" style="width:40px;height:40px;object-fit:cover;">
+          ` : ''}
+          <div>
+            <strong>${post.title}</strong>
+            ${post.summary ? `<br><small class="text-muted">${post.summary.substring(0, 60)}...</small>` : ''}
+          </div>
+        </div>
+      </td>
+      <td><span class="badge bg-info">${categoryNames[post.category] || post.category || 'N/A'}</span></td>
+      <td>${post.author?.full_name || 'Admin'}</td>
+      <td>
+        ${post.status === 'published' 
+          ? '<span class="badge bg-success">Xuất bản</span>' 
+          : '<span class="badge bg-secondary">Nháp</span>'}
+      </td>
+      <td>${new Date(post.created_at).toLocaleDateString('vi-VN')}</td>
+      <td>
+        <div class="btn-group" role="group">
+          <a href="/posts/${post.slug}" class="btn btn-sm btn-outline-primary" target="_blank" title="Xem">
+            <i class="fas fa-eye"></i>
+          </a>
+          <a href="/admin/posts/edit/${post.id}" class="btn btn-sm btn-outline-warning" title="Sửa">
+            <i class="fas fa-edit"></i>
+          </a>
+          <button class="btn btn-sm btn-outline-danger" onclick="deletePost(${post.id})" title="Xóa">
+            <i class="fas fa-trash"></i>
+          </button>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function renderPagination(metadata) {
+  const pagination = document.getElementById('pagination');
+  totalPages = metadata.total_pages;
+  
+  if (totalPages <= 1) {
+    pagination.innerHTML = '';
+    return;
+  }
+
+  let html = '';
+  
+  // Previous
+  html += `
+    <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+      <a class="page-link" href="#" onclick="loadPosts(${currentPage - 1}); return false;">Trước</a>
+    </li>
+  `;
+
+  // Pages
+  for (let i = 1; i <= totalPages; i++) {
+    if (i === 1 || i === totalPages || (i >= currentPage - 2 && i <= currentPage + 2)) {
+      html += `
+        <li class="page-item ${i === currentPage ? 'active' : ''}">
+          <a class="page-link" href="#" onclick="loadPosts(${i}); return false;">${i}</a>
+        </li>
+      `;
+    } else if (i === currentPage - 3 || i === currentPage + 3) {
+      html += '<li class="page-item disabled"><span class="page-link">...</span></li>';
+    }
+  }
+
+  // Next
+  html += `
+    <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+      <a class="page-link" href="#" onclick="loadPosts(${currentPage + 1}); return false;">Sau</a>
+    </li>
+  `;
+
+  pagination.innerHTML = html;
+}
+
+function filterPosts() {
+  loadPosts(1);
+}
+
+async function deletePost(postId) {
+  if (!confirm('Bạn có chắc chắn muốn xóa bài viết này?')) return;
+
+  try {
+    const response = await fetch(`/admin/posts/${postId}`, {
+      method: 'DELETE'
+    });
+
+    const result = await response.json();
+
+    if (result.success) {
+      alert('✅ Xóa bài viết thành công!');
+      loadPosts(currentPage);
+    } else {
+      alert('❌ Lỗi: ' + (result.message || 'Không thể xóa bài viết'));
+    }
+  } catch (error) {
+    console.error('Delete error:', error);
+    alert('❌ Có lỗi xảy ra khi xóa bài viết');
+  }
+}
+
+// Enter key to search
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('searchInput')?.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+      filterPosts();
+    }
+  });
+});
+</script>

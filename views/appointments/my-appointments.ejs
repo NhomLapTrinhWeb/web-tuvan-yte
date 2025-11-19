@@ -1,0 +1,177 @@
+<div class="container my-5">
+  <h2 class="mb-4">Lịch Hẹn Của Tôi</h2>
+
+  <% if (appointments && appointments.length > 0) { %>
+    <div class="row g-3">
+      <% appointments.forEach(apt => { %>
+        <div class="col-12">
+          <div class="card shadow-sm">
+            <div class="card-body">
+              <div class="row align-items-center">
+                <!-- Doctor/Patient Info -->
+                <div class="col-md-3">
+                  <% const displayUser = userRole === 'doctor' ? apt.patient : apt.doctor; %>
+                  <div class="d-flex align-items-center">
+                    <img src="<%= displayUser.avatar || 'https://placehold.co/60x60/0066CC/FFFFFF/png?text=U' %>" 
+                         alt="<%= displayUser.full_name %>"
+                         class="rounded-circle me-3"
+                         style="width: 60px; height: 60px; object-fit: cover;">
+                    <div>
+                      <h6 class="mb-0"><%= displayUser.full_name %></h6>
+                      <% if (userRole === 'patient' && apt.doctor.doctorProfile && apt.doctor.doctorProfile.specialty) { %>
+                        <small class="text-muted"><%= apt.doctor.doctorProfile.specialty.name %></small>
+                      <% } else { %>
+                        <small class="text-muted"><%= displayUser.phone %></small>
+                      <% } %>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Appointment Details -->
+                <div class="col-md-4">
+                  <div class="mb-1">
+                    <i class="fas fa-calendar text-primary me-2"></i>
+                    <strong><%= new Date(apt.appointment_date).toLocaleDateString('vi-VN') %></strong>
+                  </div>
+                  <div class="mb-1">
+                    <i class="fas fa-clock text-primary me-2"></i>
+                    <%= apt.time_slot %>
+                  </div>
+                  <div>
+                    <i class="fas fa-notes-medical text-primary me-2"></i>
+                    <%= apt.reason %>
+                  </div>
+                </div>
+
+                <!-- Status & Actions -->
+                <div class="col-md-3">
+                  <% 
+                    let statusClass = 'secondary';
+                    let statusText = apt.status;
+                    if (apt.status === 'confirmed') { statusClass = 'success'; statusText = 'Đã xác nhận'; }
+                    else if (apt.status === 'pending') { statusClass = 'warning'; statusText = 'Chờ xác nhận'; }
+                    else if (apt.status === 'completed') { statusClass = 'info'; statusText = 'Hoàn thành'; }
+                    else if (apt.status === 'cancelled') { statusClass = 'danger'; statusText = 'Đã hủy'; }
+                    else if (apt.status === 'in_progress') { statusClass = 'primary'; statusText = 'Đang khám'; }
+                  %>
+                  <span class="badge bg-<%= statusClass %> mb-2"><%= statusText %></span>
+                  
+                  <% if (apt.appointment_type === 'online') { %>
+                    <div class="mb-1"><small><i class="fas fa-video me-1"></i>Khám online</small></div>
+                  <% } else { %>
+                    <div class="mb-1"><small><i class="fas fa-hospital me-1"></i>Khám trực tiếp</small></div>
+                  <% } %>
+                  
+                  <% if (apt.is_paid) { %>
+                    <div><small class="text-success"><i class="fas fa-check-circle me-1"></i>Đã thanh toán</small></div>
+                  <% } %>
+                </div>
+
+                <!-- Actions -->
+                <div class="col-md-2 text-end">
+                  <div class="btn-group-vertical">
+                    <% if (!apt.is_paid && apt.payment_status === 'pending' && userRole === 'patient') { %>
+                      <button class="btn btn-sm btn-success mb-1" onclick="payAppointment(<%= apt.id %>)">
+                        <i class="fas fa-credit-card me-1"></i>Thanh toán
+                      </button>
+                    <% } %>
+                    
+                    <% if (['pending', 'confirmed'].includes(apt.status)) { %>
+                      <button class="btn btn-sm btn-danger mb-1" onclick="cancelAppointment(<%= apt.id %>)">
+                        <i class="fas fa-times me-1"></i>Hủy
+                      </button>
+                    <% } %>
+                    
+                    <% if (apt.status === 'completed' && userRole === 'patient') { %>
+                      <a href="/reviews/create?appointment_id=<%= apt.id %>" class="btn btn-sm btn-primary">
+                        <i class="fas fa-star me-1"></i>Đánh giá
+                      </a>
+                    <% } %>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      <% }) %>
+    </div>
+  <% } else { %>
+    <div class="text-center py-5">
+      <i class="fas fa-calendar-times fa-4x text-muted mb-3"></i>
+      <p class="text-muted">Bạn chưa có lịch hẹn nào</p>
+      <a href="/appointments/book" class="btn btn-primary">
+        <i class="fas fa-plus me-2"></i>Đặt lịch khám
+      </a>
+    </div>
+  <% } %>
+</div>
+
+<script>
+  // Show payment success/failed message
+  const urlParams = new URLSearchParams(window.location.search);
+  const paymentStatus = urlParams.get('payment');
+  const appointmentId = urlParams.get('appointmentId');
+  
+  if (paymentStatus === 'success') {
+    alert('✅ Thanh toán thành công! Lịch hẹn đã được xác nhận.');
+    window.history.replaceState({}, document.title, '/appointments/my-appointments');
+  } else if (paymentStatus === 'failed') {
+    const code = urlParams.get('code');
+    alert(`❌ Thanh toán thất bại. Mã lỗi: ${code || 'Unknown'}`);
+    window.history.replaceState({}, document.title, '/appointments/my-appointments');
+  }
+
+  async function payAppointment(appointmentId) {
+    if (!confirm('Bạn có muốn thanh toán cho lịch hẹn này?')) return;
+
+    try {
+      const response = await fetch('/api/payment/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ appointmentId })
+      });
+
+      const result = await response.json();
+
+      if (result.success && result.paymentUrl) {
+        // Redirect to VNPAY payment page
+        window.location.href = result.paymentUrl;
+      } else {
+        alert(result.error || 'Có lỗi xảy ra khi tạo thanh toán');
+      }
+    } catch (error) {
+      console.error('Payment error:', error);
+      alert('Có lỗi xảy ra khi tạo thanh toán');
+    }
+  }
+
+  async function cancelAppointment(appointmentId) {
+    if (!confirm('Bạn có chắc chắn muốn hủy lịch hẹn này?')) return;
+
+    const reason = prompt('Lý do hủy (tùy chọn):');
+
+    try {
+      const response = await fetch(`/appointments/${appointmentId}/cancel`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ cancellation_reason: reason })
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        alert(result.message);
+        location.reload();
+      } else {
+        alert(result.message || 'Có lỗi xảy ra');
+      }
+    } catch (error) {
+      console.error('Cancel error:', error);
+      alert('Có lỗi xảy ra khi hủy lịch hẹn');
+    }
+  }
+</script>

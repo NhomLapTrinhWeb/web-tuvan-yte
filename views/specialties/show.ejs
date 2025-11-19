@@ -1,0 +1,186 @@
+<%- contentFor('additionalStyles') %>
+<style>
+  .specialty-header {
+    background: linear-gradient(135deg, #0066CC 0%, #004c99 100%);
+    color: white;
+    padding: 4rem 0;
+    margin-bottom: 3rem;
+  }
+  
+  .specialty-icon-large {
+    font-size: 5rem;
+    opacity: 0.9;
+  }
+  
+  .doctor-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 2rem;
+  }
+  
+  .doctor-card {
+    transition: all 0.3s ease;
+    height: 100%;
+  }
+  
+  .doctor-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 10px 30px rgba(0, 102, 204, 0.15) !important;
+  }
+  
+  .doctor-image-wrapper {
+    position: relative;
+    height: 300px;
+    overflow: hidden;
+    border-radius: 8px 8px 0 0;
+  }
+  
+  .doctor-image-wrapper img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  
+  .doctor-rating-badge {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: rgba(255, 193, 7, 0.95);
+    color: white;
+    padding: 8px 15px;
+    border-radius: 25px;
+    font-weight: bold;
+  }
+</style>
+<% -%>
+
+<section class="specialty-header">
+  <div class="container">
+    <div class="row align-items-center">
+      <div class="col-md-8">
+        <h1 class="display-4 fw-bold mb-3">
+          <% if (specialty.icon) { %>
+            <i class="<%= specialty.icon %> me-3"></i>
+          <% } %>
+          <%= specialty.name %>
+        </h1>
+        
+        <% if (specialty.description) { %>
+          <p class="lead mb-4"><%= specialty.description %></p>
+        <% } %>
+        
+        <div class="d-flex gap-4 text-white-50">
+          <span>
+            <i class="fas fa-user-md me-2"></i>
+            <strong><%= totalDoctors %></strong> bác sĩ
+          </span>
+        </div>
+      </div>
+      
+      <div class="col-md-4 text-center">
+        <% if (specialty.icon) { %>
+          <div class="specialty-icon-large">
+            <i class="<%= specialty.icon %>"></i>
+          </div>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="py-5">
+  <div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h3>Đội ngũ bác sĩ <%= specialty.name %></h3>
+      <a href="/specialties" class="btn btn-outline-primary">
+        <i class="fas fa-arrow-left me-2"></i>Tất cả chuyên khoa
+      </a>
+    </div>
+    
+    <% if (doctors && doctors.length > 0) { %>
+      <div class="doctor-grid">
+        <% doctors.forEach(doctor => { %>
+          <% if (doctor && doctor.user) { %>
+            <div class="card doctor-card border-0 shadow-sm">
+              <div class="doctor-image-wrapper">
+                <img src="<%= doctor.user.avatar || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(doctor.user.full_name) + '&size=400&background=0066CC&color=fff' %>" 
+                     alt="<%= doctor.user.full_name %>"
+                     onerror="this.src='https://placehold.co/400x300/0066CC/FFFFFF/png?text=Doctor'">
+                <div class="doctor-rating-badge">
+                  <i class="fas fa-star"></i>
+                  <%= (Number(doctor.rating) || 0).toFixed(1) %>
+                </div>
+              </div>
+              
+              <div class="card-body text-center">
+                <h5 class="card-title fw-bold mb-2">
+                  <a href="/doctors/<%= doctor.user_id %>" class="text-decoration-none text-dark hover-primary">
+                    <%= doctor.user.full_name %>
+                  </a>
+                </h5>
+                
+                <% if (doctor.department) { %>
+                  <p class="text-muted small mb-2">
+                    <i class="fas fa-building me-1"></i><%= doctor.department.name %>
+                  </p>
+                <% } %>
+                
+                <p class="text-muted small mb-3">
+                  <i class="fas fa-graduation-cap me-1"></i>
+                  <%= doctor.experience_years %> năm kinh nghiệm
+                </p>
+                
+                <div class="d-grid gap-2">
+                  <a href="/doctors/<%= doctor.user_id %>" class="btn btn-outline-primary btn-sm">
+                    <i class="fas fa-user-md me-2"></i>Xem hồ sơ
+                  </a>
+                  <a href="/appointments/book/<%= doctor.user_id %>" class="btn btn-primary btn-sm">
+                    <i class="fas fa-calendar-check me-2"></i>Đặt lịch khám
+                  </a>
+                </div>
+              </div>
+            </div>
+          <% } %>
+        <% }); %>
+      </div>
+      
+      <!-- Pagination -->
+      <% if (totalPages > 1) { %>
+        <nav aria-label="Doctor pagination" class="mt-5">
+          <ul class="pagination justify-content-center">
+            <li class="page-item <%= currentPage === 1 ? 'disabled' : '' %>">
+              <a class="page-link" href="?page=<%= currentPage - 1 %>">
+                <i class="fas fa-chevron-left"></i>
+              </a>
+            </li>
+            
+            <% for (let i = 1; i <= totalPages; i++) { %>
+              <% if (i === 1 || i === totalPages || (i >= currentPage - 2 && i <= currentPage + 2)) { %>
+                <li class="page-item <%= currentPage === i ? 'active' : '' %>">
+                  <a class="page-link" href="?page=<%= i %>"><%= i %></a>
+                </li>
+              <% } else if (i === currentPage - 3 || i === currentPage + 3) { %>
+                <li class="page-item disabled">
+                  <span class="page-link">...</span>
+                </li>
+              <% } %>
+            <% } %>
+            
+            <li class="page-item <%= currentPage === totalPages ? 'disabled' : '' %>">
+              <a class="page-link" href="?page=<%= currentPage + 1 %>">
+                <i class="fas fa-chevron-right"></i>
+              </a>
+            </li>
+          </ul>
+        </nav>
+      <% } %>
+    <% } else { %>
+      <div class="text-center py-5">
+        <i class="fas fa-user-md fa-4x text-muted mb-3"></i>
+        <h4>Chưa có bác sĩ trong chuyên khoa này</h4>
+        <p class="text-muted">Vui lòng xem các chuyên khoa khác</p>
+        <a href="/specialties" class="btn btn-primary">Xem tất cả chuyên khoa</a>
+      </div>
+    <% } %>
+  </div>
+</section>

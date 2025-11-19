@@ -1,0 +1,210 @@
+<%- contentFor('additionalStyles') %>
+<style>
+  .filter-section {
+    background: #f8f9fa;
+    padding: 2rem 0;
+    margin-bottom: 2rem;
+  }
+  
+  .doctor-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 2rem;
+  }
+  
+  .doctor-card {
+    transition: all 0.3s ease;
+    height: 100%;
+  }
+  
+  .doctor-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 10px 30px rgba(0, 102, 204, 0.15) !important;
+  }
+  
+  .doctor-image-wrapper {
+    position: relative;
+    height: 300px;
+    overflow: hidden;
+    border-radius: 8px 8px 0 0;
+  }
+  
+  .doctor-image-wrapper img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  
+  .doctor-rating-badge {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: rgba(255, 193, 7, 0.95);
+    color: white;
+    padding: 8px 15px;
+    border-radius: 25px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  
+  .specialty-badge {
+    background: #e3f2fd;
+    color: var(--primary-color);
+    padding: 5px 12px;
+    border-radius: 15px;
+    font-size: 0.85rem;
+    display: inline-block;
+    margin-top: 0.5rem;
+  }
+</style>
+<% -%>
+
+<section class="filter-section">
+  <div class="container">
+    <h2 class="text-center mb-4">Đội Ngũ Bác Sĩ</h2>
+    <p class="text-center text-muted mb-4">Tìm kiếm bác sĩ phù hợp với nhu cầu của bạn</p>
+    
+    <form method="GET" action="/doctors" class="row g-3">
+      <div class="col-md-4">
+        <label class="form-label">Tìm kiếm theo tên</label>
+        <input type="text" name="search" class="form-control" placeholder="Nhập tên bác sĩ..." value="<%= filters.search %>">
+      </div>
+      
+      <div class="col-md-3">
+        <label class="form-label">Chuyên khoa</label>
+        <select name="specialty" class="form-select">
+          <option value="">Tất cả chuyên khoa</option>
+          <% specialties.forEach(specialty => { %>
+            <option value="<%= specialty.id %>" <%= filters.specialty == specialty.id ? 'selected' : '' %>>
+              <%= specialty.name %>
+            </option>
+          <% }); %>
+        </select>
+      </div>
+      
+      <div class="col-md-3">
+        <label class="form-label">Khoa</label>
+        <select name="department" class="form-select">
+          <option value="">Tất cả khoa</option>
+          <% departments.forEach(department => { %>
+            <option value="<%= department.id %>" <%= filters.department == department.id ? 'selected' : '' %>>
+              <%= department.name %>
+            </option>
+          <% }); %>
+        </select>
+      </div>
+      
+      <div class="col-md-2">
+        <label class="form-label">&nbsp;</label>
+        <button type="submit" class="btn btn-primary w-100">
+          <i class="fas fa-search me-2"></i>Tìm kiếm
+        </button>
+      </div>
+    </form>
+  </div>
+</section>
+
+<section class="py-5">
+  <div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h5 class="mb-0">Tìm thấy <strong><%= totalDoctors %></strong> bác sĩ</h5>
+    </div>
+    
+    <% if (doctors && doctors.length > 0) { %>
+      <div class="doctor-grid">
+        <% doctors.forEach(doctor => { %>
+          <% if (doctor && doctor.user && doctor.specialty) { %>
+            <div class="card doctor-card border-0 shadow-sm">
+              <div class="doctor-image-wrapper">
+                <img src="<%= doctor.user.avatar || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(doctor.user.full_name) + '&size=400&background=0066CC&color=fff' %>" 
+                     alt="<%= doctor.user.full_name %>"
+                     onerror="this.src='https://placehold.co/400x300/0066CC/FFFFFF/png?text=Doctor'">
+                <div class="doctor-rating-badge">
+                  <i class="fas fa-star"></i>
+                  <%= (Number(doctor.rating) || 0).toFixed(1) %>
+                </div>
+              </div>
+              
+              <div class="card-body text-center">
+                <h5 class="card-title fw-bold mb-2">
+                  <a href="/doctors/<%= doctor.user_id %>" class="text-decoration-none text-dark hover-primary">
+                    <%= doctor.user.full_name %>
+                  </a>
+                </h5>
+                
+                <span class="specialty-badge">
+                  <% if (doctor.specialty.icon) { %>
+                    <i class="<%= doctor.specialty.icon %> me-1"></i>
+                  <% } %>
+                  <%= doctor.specialty.name %>
+                </span>
+                
+                <% if (doctor.department) { %>
+                  <p class="text-muted small mt-2 mb-2">
+                    <i class="fas fa-building me-1"></i><%= doctor.department.name %>
+                  </p>
+                <% } %>
+                
+                <p class="text-muted small mb-3">
+                  <i class="fas fa-graduation-cap me-1"></i>
+                  <%= doctor.experience_years %> năm kinh nghiệm
+                </p>
+                
+                <div class="d-grid gap-2">
+                  <a href="/doctors/<%= doctor.user_id %>" class="btn btn-outline-primary btn-sm">
+                    <i class="fas fa-user-md me-2"></i>Xem hồ sơ
+                  </a>
+                  <a href="/appointments/book/<%= doctor.user_id %>" class="btn btn-primary btn-sm">
+                    <i class="fas fa-calendar-check me-2"></i>Đặt lịch khám
+                  </a>
+                </div>
+              </div>
+            </div>
+          <% } %>
+        <% }); %>
+      </div>
+      
+      <!-- Pagination -->
+      <% if (totalPages > 1) { %>
+        <nav aria-label="Doctor pagination" class="mt-5">
+          <ul class="pagination justify-content-center">
+            <li class="page-item <%= currentPage === 1 ? 'disabled' : '' %>">
+              <a class="page-link" href="?page=<%= currentPage - 1 %><%= filters.specialty ? '&specialty=' + filters.specialty : '' %><%= filters.department ? '&department=' + filters.department : '' %><%= filters.search ? '&search=' + filters.search : '' %>">
+                <i class="fas fa-chevron-left"></i>
+              </a>
+            </li>
+            
+            <% for (let i = 1; i <= totalPages; i++) { %>
+              <% if (i === 1 || i === totalPages || (i >= currentPage - 2 && i <= currentPage + 2)) { %>
+                <li class="page-item <%= currentPage === i ? 'active' : '' %>">
+                  <a class="page-link" href="?page=<%= i %><%= filters.specialty ? '&specialty=' + filters.specialty : '' %><%= filters.department ? '&department=' + filters.department : '' %><%= filters.search ? '&search=' + filters.search : '' %>">
+                    <%= i %>
+                  </a>
+                </li>
+              <% } else if (i === currentPage - 3 || i === currentPage + 3) { %>
+                <li class="page-item disabled">
+                  <span class="page-link">...</span>
+                </li>
+              <% } %>
+            <% } %>
+            
+            <li class="page-item <%= currentPage === totalPages ? 'disabled' : '' %>">
+              <a class="page-link" href="?page=<%= currentPage + 1 %><%= filters.specialty ? '&specialty=' + filters.specialty : '' %><%= filters.department ? '&department=' + filters.department : '' %><%= filters.search ? '&search=' + filters.search : '' %>">
+                <i class="fas fa-chevron-right"></i>
+              </a>
+            </li>
+          </ul>
+        </nav>
+      <% } %>
+    <% } else { %>
+      <div class="text-center py-5">
+        <i class="fas fa-user-md fa-4x text-muted mb-3"></i>
+        <h4>Không tìm thấy bác sĩ phù hợp</h4>
+        <p class="text-muted">Vui lòng thử lại với tiêu chí tìm kiếm khác</p>
+        <a href="/doctors" class="btn btn-primary">Xem tất cả bác sĩ</a>
+      </div>
+    <% } %>
+  </div>
+</section>

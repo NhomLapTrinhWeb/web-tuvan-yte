@@ -1,0 +1,38 @@
+<div class="container">
+  <h1>Lịch sử khám bệnh</h1>
+  
+  <div class="appointments-list">
+    <% if (appointments.length === 0) { %>
+      <p>Bạn chưa có lịch hẹn nào.</p>
+    <% } else { %>
+      <table class="appointments-table">
+        <thead>
+          <tr>
+            <th>Ngày</th>
+            <th>Giờ</th>
+            <th>Bác sĩ</th>
+            <th>Lý do</th>
+            <th>Trạng thái</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% appointments.forEach(apt => { %>
+            <tr>
+              <td><%= new Date(apt.appointmentDate).toLocaleDateString('vi-VN') %></td>
+              <td><%= apt.timeSlot %></td>
+              <td><%= apt.Doctor.fullName %></td>
+              <td><%= apt.reason %></td>
+              <td>
+                <span class="status status-<%= apt.status %>">
+                  <%= apt.status === 'pending' ? 'Chờ xác nhận' : 
+                      apt.status === 'confirmed' ? 'Đã xác nhận' :
+                      apt.status === 'completed' ? 'Hoàn thành' : 'Đã hủy' %>
+                </span>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    <% } %>
+  </div>
+</div>

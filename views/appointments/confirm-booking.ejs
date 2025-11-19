@@ -1,0 +1,200 @@
+<div class="container my-5">
+  <div class="row mb-4">
+    <div class="col-12">
+      <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+          <li class="breadcrumb-item"><a href="/appointments/book">Chọn bác sĩ</a></li>
+          <li class="breadcrumb-item"><a href="/appointments/book/<%= doctor.id %>">Chọn giờ</a></li>
+          <li class="breadcrumb-item active">Xác nhận</li>
+        </ol>
+      </nav>
+      <h2 class="mb-3">Xác Nhận Đặt Lịch</h2>
+      <p class="text-muted">Bước 3/3: Điền thông tin và xác nhận</p>
+    </div>
+  </div>
+
+  <div class="row">
+    <!-- Booking Summary -->
+    <div class="col-md-4 mb-4">
+      <div class="card sticky-top" style="top: 20px;">
+        <div class="card-header bg-primary text-white">
+          <h5 class="mb-0">Thông tin đặt lịch</h5>
+        </div>
+        <div class="card-body">
+          <div class="mb-3">
+            <img src="<%= doctor.user.avatar || 'https://placehold.co/80x80/0066CC/FFFFFF/png?text=Dr' %>" 
+                 alt="<%= doctor.user.full_name %>"
+                 class="rounded-circle d-block mx-auto mb-2"
+                 style="width: 80px; height: 80px; object-fit: cover;">
+            <h5 class="text-center mb-0"><%= doctor.user.full_name %></h5>
+            <% if (doctor.specialty) { %>
+              <p class="text-center text-muted small"><%= doctor.specialty.name %></p>
+            <% } %>
+          </div>
+
+          <hr>
+
+          <div class="mb-2">
+            <small class="text-muted">Ngày khám:</small>
+            <div><strong><%= new Date(timeSlot.date).toLocaleDateString('vi-VN') %></strong></div>
+          </div>
+
+          <div class="mb-2">
+            <small class="text-muted">Giờ khám:</small>
+            <div><strong><%= timeSlot.start_time.substring(0, 5) %> - <%= timeSlot.end_time.substring(0, 5) %></strong></div>
+          </div>
+
+          <hr>
+
+          <div class="d-flex justify-content-between mb-2">
+            <span>Phí khám:</span>
+            <strong class="text-primary">
+              <%= doctor.consultation_price ? doctor.consultation_price.toLocaleString('vi-VN') + 'đ' : 'Miễn phí' %>
+            </strong>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Patient Info Form -->
+    <div class="col-md-8">
+      <div class="card">
+        <div class="card-body">
+          <h5 class="mb-4">Thông tin bệnh nhân</h5>
+
+          <form id="bookingForm">
+            <input type="hidden" name="doctor_id" value="<%= doctor.id %>">
+            <input type="hidden" name="slot_id" value="<%= timeSlot.id %>">
+
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Họ và tên <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" name="patient_name" 
+                       value="<%= patientInfo && patientInfo.user ? patientInfo.user.full_name : '' %>" required>
+              </div>
+
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Số điện thoại <span class="text-danger">*</span></label>
+                <input type="tel" class="form-control" name="patient_phone" 
+                       value="<%= patientInfo && patientInfo.user ? patientInfo.user.phone : '' %>" required>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Email</label>
+                <input type="email" class="form-control" name="patient_email"
+                       value="<%= patientInfo && patientInfo.user ? patientInfo.user.email : '' %>">
+              </div>
+
+              <div class="col-md-3 mb-3">
+                <label class="form-label">Ngày sinh</label>
+                <input type="date" class="form-control" name="patient_dob"
+                       value="<%= patientInfo ? patientInfo.date_of_birth : '' %>">
+              </div>
+
+              <div class="col-md-3 mb-3">
+                <label class="form-label">Giới tính</label>
+                <select class="form-select" name="patient_gender">
+                  <option value="">Chọn</option>
+                  <option value="male" <%= patientInfo && patientInfo.gender === 'male' ? 'selected' : '' %>>Nam</option>
+                  <option value="female" <%= patientInfo && patientInfo.gender === 'female' ? 'selected' : '' %>>Nữ</option>
+                  <option value="other" <%= patientInfo && patientInfo.gender === 'other' ? 'selected' : '' %>>Khác</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Hình thức khám</label>
+              <select class="form-select" name="appointment_type">
+                <option value="online">Khám online (Video call)</option>
+                <option value="offline">Khám tại phòng khám</option>
+              </select>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Lý do khám <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" name="reason" 
+                     placeholder="VD: Khám tổng quát, tư vấn sức khỏe..." required>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Triệu chứng</label>
+              <textarea class="form-control" name="symptoms" rows="3" 
+                        placeholder="Mô tả các triệu chứng (nếu có)..."></textarea>
+            </div>
+
+            <div class="mb-3 form-check">
+              <input type="checkbox" class="form-check-input" id="agreeTerms" required>
+              <label class="form-check-label" for="agreeTerms">
+                Tôi đồng ý với <a href="/terms" target="_blank">Điều khoản sử dụng</a> 
+                và <a href="/privacy" target="_blank">Chính sách bảo mật</a>
+              </label>
+            </div>
+
+            <div id="alertContainer"></div>
+
+            <div class="d-flex gap-2">
+              <button type="submit" class="btn btn-primary btn-lg flex-fill">
+                <i class="fas fa-check me-2"></i>Xác nhận đặt lịch
+              </button>
+              <a href="/appointments/book/<%= doctor.id %>" class="btn btn-outline-secondary btn-lg">
+                <i class="fas fa-arrow-left"></i>
+              </a>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const bookingForm = document.getElementById('bookingForm');
+  const alertContainer = document.getElementById('alertContainer');
+
+  bookingForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const submitBtn = bookingForm.querySelector('button[type="submit"]');
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Đang xử lý...';
+
+    try {
+      const formData = new FormData(bookingForm);
+      const data = Object.fromEntries(formData);
+
+      const response = await fetch('/appointments/book', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        alertContainer.innerHTML = `
+          <div class="alert alert-success">
+            <i class="fas fa-check-circle me-2"></i>${result.message}
+          </div>
+        `;
+        
+        setTimeout(() => {
+          window.location.href = '/appointments/my-appointments';
+        }, 2000);
+      } else {
+        throw new Error(result.message);
+      }
+    } catch (error) {
+      alertContainer.innerHTML = `
+        <div class="alert alert-danger">
+          <i class="fas fa-exclamation-circle me-2"></i>${error.message || 'Có lỗi xảy ra'}
+        </div>
+      `;
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = '<i class="fas fa-check me-2"></i>Xác nhận đặt lịch';
+    }
+  });
+</script>

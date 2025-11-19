@@ -1,0 +1,21 @@
+<div class="container">
+  <h1>Tin tức & Bài viết</h1>
+  
+  <div class="posts-list">
+    <% posts.forEach(post => { %>
+      <article class="post-item">
+        <img src="<%= post.thumbnail || '/images/default-post.jpg' %>" alt="<%= post.title %>">
+        <div class="post-content">
+          <h2><a href="/posts/<%= post.slug %>"><%= post.title %></a></h2>
+          <div class="post-meta">
+            <span>By <%= post.author.fullName %></span>
+            <span><%= new Date(post.publishedAt).toLocaleDateString('vi-VN') %></span>
+            <span><%= post.views %> lượt xem</span>
+          </div>
+          <p><%= post.excerpt %></p>
+          <a href="/posts/<%= post.slug %>" class="read-more">Đọc thêm →</a>
+        </div>
+      </article>
+    <% }) %>
+  </div>
+</div>

@@ -1,0 +1,129 @@
+<section class="py-5 bg-light">
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-8 mx-auto">
+        <h1 class="display-4 fw-bold text-center mb-5">Liên Hệ Với Chúng Tôi</h1>
+        
+        <div class="row g-4 mb-5">
+          <div class="col-md-4">
+            <div class="card border-0 shadow-sm text-center h-100">
+              <div class="card-body p-4">
+                <div class="display-6 text-primary mb-3">
+                  <i class="fas fa-phone-alt"></i>
+                </div>
+                <h5 class="fw-bold mb-2">Hotline</h5>
+                <p class="text-muted mb-0">1900 1234</p>
+                <small class="text-muted">24/7 hỗ trợ</small>
+              </div>
+            </div>
+          </div>
+          
+          <div class="col-md-4">
+            <div class="card border-0 shadow-sm text-center h-100">
+              <div class="card-body p-4">
+                <div class="display-6 text-primary mb-3">
+                  <i class="fas fa-envelope"></i>
+                </div>
+                <h5 class="fw-bold mb-2">Email</h5>
+                <p class="text-muted mb-0">info@hospital.vn</p>
+                <small class="text-muted">Phản hồi trong 24h</small>
+              </div>
+            </div>
+          </div>
+          
+          <div class="col-md-4">
+            <div class="card border-0 shadow-sm text-center h-100">
+              <div class="card-body p-4">
+                <div class="display-6 text-primary mb-3">
+                  <i class="fas fa-map-marker-alt"></i>
+                </div>
+                <h5 class="fw-bold mb-2">Địa chỉ</h5>
+                <p class="text-muted mb-0">123 Đường ABC</p>
+                <small class="text-muted">TP. Hồ Chí Minh</small>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="card border-0 shadow-sm">
+          <div class="card-body p-5">
+            <h3 class="text-primary mb-4">Gửi Tin Nhắn</h3>
+            
+            <form id="contactForm">
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label class="form-label">Họ và tên <span class="text-danger">*</span></label>
+                  <input type="text" class="form-control" name="name" required>
+                </div>
+                
+                <div class="col-md-6">
+                  <label class="form-label">Email <span class="text-danger">*</span></label>
+                  <input type="email" class="form-control" name="email" required>
+                </div>
+                
+                <div class="col-md-6">
+                  <label class="form-label">Số điện thoại <span class="text-danger">*</span></label>
+                  <input type="tel" class="form-control" name="phone" required>
+                </div>
+                
+                <div class="col-md-6">
+                  <label class="form-label">Chủ đề</label>
+                  <select class="form-select" name="subject">
+                    <option value="">Chọn chủ đề</option>
+                    <option value="booking">Đặt lịch khám</option>
+                    <option value="consultation">Tư vấn</option>
+                    <option value="feedback">Góp ý</option>
+                    <option value="other">Khác</option>
+                  </select>
+                </div>
+                
+                <div class="col-12">
+                  <label class="form-label">Nội dung <span class="text-danger">*</span></label>
+                  <textarea class="form-control" name="message" rows="5" required></textarea>
+                </div>
+                
+                <div class="col-12">
+                  <button type="submit" class="btn btn-primary btn-lg">
+                    <i class="fas fa-paper-plane me-2"></i>Gửi tin nhắn
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
+        
+        <div class="card border-0 shadow-sm mt-4">
+          <div class="card-body p-4">
+            <h5 class="fw-bold mb-3">Kết Nối Với Chúng Tôi</h5>
+            <div class="d-flex gap-3">
+              <a href="#" class="btn btn-outline-primary btn-lg">
+                <i class="fab fa-facebook"></i>
+              </a>
+              <a href="#" class="btn btn-outline-info btn-lg">
+                <i class="fab fa-twitter"></i>
+              </a>
+              <a href="#" class="btn btn-outline-danger btn-lg">
+                <i class="fab fa-youtube"></i>
+              </a>
+              <a href="#" class="btn btn-outline-success btn-lg">
+                <i class="fab fa-whatsapp"></i>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<%- contentFor('additionalScripts') %>
+<script>
+document.getElementById('contactForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  
+  // Simulate form submission
+  alert('Cảm ơn bạn đã liên hệ! Chúng tôi sẽ phản hồi trong thời gian sớm nhất.');
+  this.reset();
+});
+</script>
+<% -%>

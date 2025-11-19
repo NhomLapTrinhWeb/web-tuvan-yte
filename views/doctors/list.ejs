@@ -1,0 +1,20 @@
+<div class="container">
+  <h1>Đội ngũ bác sĩ</h1>
+  
+  <div class="doctors-list">
+    <% doctors.forEach(doctor => { %>
+      <div class="doctor-item">
+        <img src="<%= doctor.avatar || '/images/default-avatar.jpg' %>" alt="<%= doctor.fullName %>">
+        <div class="doctor-info">
+          <h2><%= doctor.fullName %></h2>
+          <p class="degree"><%= doctor.degree %></p>
+          <p class="specialization"><%= doctor.specialization %></p>
+          <p class="department"><%= doctor.Department.name %></p>
+          <p class="experience">Kinh nghiệm: <%= doctor.experience %> năm</p>
+          <p class="bio"><%= doctor.bio %></p>
+          <a href="/appointments/booking?doctorId=<%= doctor.id %>" class="btn btn-primary">Đặt lịch khám</a>
+        </div>
+      </div>
+    <% }) %>
+  </div>
+</div>

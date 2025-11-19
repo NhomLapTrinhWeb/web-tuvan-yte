@@ -1,0 +1,706 @@
+const { User, Patient, Doctor, Appointment, Transaction, Review, Specialty, Post } = require('../models');
+const EmailService = require('../services/EmailService');
+const { Op } = require('sequelize');
+const bcrypt = require('bcrypt');
+
+const adminController = {
+  /**
+   * Get dashboard statistics
+   */
+  async getDashboard(req, res) {
+    try {
+      // Count users by role
+      const totalUsers = await User.count();
+      const totalPatients = await Patient.count();
+      const totalDoctors = await Doctor.count();
+      const totalAppointments = await Appointment.count();
+      const totalPosts = await Post.count();
+
+      res.render('admin/dashboard', {
+        title: 'Dashboard',
+        totalUsers,
+        totalPatients,
+        totalDoctors,
+        totalAppointments,
+        totalPosts
+      });
+    } catch (error) {
+      console.error('Get dashboard error:', error);
+      res.status(500).send('Internal server error');
+    }
+  },
+
+  /**
+   * Get all users with filters
+   */
+  async getUsers(req, res) {
+    try {
+      const { page = 1, limit = 20, role = null, is_active = null, search = null } = req.query;
+      const offset = (page - 1) * limit;
+
+      const where = {};
+      if (role) where.role = role;
+      if (is_active !== null) where.is_active = is_active === 'true';
+      if (search) {
+        where[Op.or] = [
+          { full_name: { [Op.like]: `%${search}%` } },
+          { email: { [Op.like]: `%${search}%` } },
+          { phone: { [Op.like]: `%${search}%` } }
+        ];
+      }
+
+      const { count, rows } = await User.findAndCountAll({
+        where,
+        attributes: { exclude: ['password'] },
+        order: [['created_at', 'DESC']],
+        limit: parseInt(limit),
+        offset: parseInt(offset)
+      });
+
+      return res.json({
+        success: true,
+        data: rows,
+        metadata: {
+          page: parseInt(page),
+          limit: parseInt(limit),
+          total: count,
+          total_pages: Math.ceil(count / limit)
+        }
+      });
+    } catch (error) {
+      console.error('Get users error:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Internal server error'
+      });
+    }
+  },
+
+  /**
+   * Toggle user active status
+   */
+  async toggleUserStatus(req, res) {
+    try {
+      const { id } = req.params;
+
+      const user = await User.findByPk(id);
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          message: 'User not found'
+        });
+      }
+
+      await user.update({
+        is_active: !user.is_active
+      });
+
+      return res.json({
+        success: true,
+        message: `User ${user.is_active ? 'activated' : 'deactivated'} successfully`,
+        data: user
+      });
+    } catch (error) {
+      console.error('Toggle user status error:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Internal server error'
+      });
+    }
+  },
+
+  /**
+   * Get all doctors with filters
+   */
+  async getDoctors(req, res) {
+    try {
+      const {
+        page = 1,
+        limit = 20,
+        specialty_id = null,
+        is_approved = null,
+        search = null
+      } = req.query;
+      const offset = (page - 1) * limit;
+
+      const where = {};
+      if (specialty_id) where.specialty_id = specialty_id;
+      if (is_approved !== null) where.is_approved = is_approved === 'true';
+
+      const include = [
+        { model: Specialty, as: 'specialty' },
+        { model: User, as: 'user', attributes: { exclude: ['password'] } }
+      ];
+
+      if (search) {
+        include[1].where = {
+          [Op.or]: [
+            { full_name: { [Op.like]: `%${search}%` } },
+            { email: { [Op.like]: `%${search}%` } }
+          ]
+        };
+      }
+
+      const { count, rows } = await Doctor.findAndCountAll({
+        where,
+        include,
+        order: [['created_at', 'DESC']],
+        limit: parseInt(limit),
+        offset: parseInt(offset)
+      });
+
+      return res.json({
+        success: true,
+        data: rows,
+        metadata: {
+          page: parseInt(page),
+          limit: parseInt(limit),
+          total: count,
+          total_pages: Math.ceil(count / limit)
+        }
+      });
+    } catch (error) {
+      console.error('Get doctors error:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Internal server error'
+      });
+    }
+  },
+
+  /**
+   * Approve/Reject doctor
+   */
+  async approveDoctor(req, res) {
+    try {
+      const { id } = req.params;
+      const { is_approved } = req.body;
+
+      const doctor = await Doctor.findByPk(id, {
+        include: [{ model: User, as: 'user' }]
+      });
+
+      if (!doctor) {
+        return res.status(404).json({
+          success: false,
+          message: 'Doctor not found'
+        });
+      }
+
+      await doctor.update({
+        is_approved,
+        approval_date: is_approved ? new Date() : null
+      });
+
+      // Send email notification
+      await EmailService.sendDoctorApprovalEmail(doctor.user, is_approved);
+
+      return res.json({
+        success: true,
+        message: `Doctor ${is_approved ? 'approved' : 'rejected'} successfully`,
+        data: doctor
+      });
+    } catch (error) {
+      console.error('Approve doctor error:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Internal server error'
+      });
+    }
+  },
+
+  /**
+   * Get all appointments
+   */
+  async getAppointments(req, res) {
+    try {
+      const {
+        page = 1,
+        limit = 20,
+        status = null,
+        date_from = null,
+        date_to = null
+      } = req.query;
+      const offset = (page - 1) * limit;
+
+      const where = {};
+      if (status) where.status = status;
+      if (date_from && date_to) {
+        where.appointment_date = {
+          [Op.between]: [date_from, date_to]
+        };
+      }
+
+      const { count, rows } = await Appointment.findAndCountAll({
+        where,
+        include: [
+          { model: Patient, as: 'patient', include: [{ model: User, as: 'user' }] },
+          { model: Doctor, as: 'doctor', include: [{ model: User, as: 'user' }] }
+        ],
+        order: [['appointment_date', 'DESC'], ['time_slot', 'DESC']],
+        limit: parseInt(limit),
+        offset: parseInt(offset)
+      });
+
+      return res.json({
+        success: true,
+        data: rows,
+        metadata: {
+          page: parseInt(page),
+          limit: parseInt(limit),
+          total: count,
+          total_pages: Math.ceil(count / limit)
+        }
+      });
+    } catch (error) {
+      console.error('Get appointments error:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Internal server error'
+      });
+    }
+  },
+
+  /**
+   * Get all transactions
+   */
+  async getTransactions(req, res) {
+    try {
+      const {
+        page = 1,
+        limit = 20,
+        status = null,
+        payment_method = null
+      } = req.query;
+      const offset = (page - 1) * limit;
+
+      const where = {};
+      if (status) where.status = status;
+      if (payment_method) where.payment_method = payment_method;
+
+      const { count, rows } = await Transaction.findAndCountAll({
+        where,
+        include: [
+          {
+            model: Appointment,
+            as: 'appointment',
+            include: ['patient', 'doctor']
+          }
+        ],
+        order: [['created_at', 'DESC']],
+        limit: parseInt(limit),
+        offset: parseInt(offset)
+      });
+
+      return res.json({
+        success: true,
+        data: rows,
+        metadata: {
+          page: parseInt(page),
+          limit: parseInt(limit),
+          total: count,
+          total_pages: Math.ceil(count / limit)
+        }
+      });
+    } catch (error) {
+      console.error('Get transactions error:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Internal server error'
+      });
+    }
+  },
+
+  /**
+   * Get all reviews
+   */
+  async getReviews(req, res) {
+    try {
+      const { page = 1, limit = 20, rating = null } = req.query;
+      const offset = (page - 1) * limit;
+
+      const where = {};
+      if (rating) where.rating = parseInt(rating);
+
+      const { count, rows } = await Review.findAndCountAll({
+        where,
+        include: [
+          { model: Patient, as: 'patient', include: [{ model: User, as: 'user' }] },
+          { model: Doctor, as: 'doctor', include: [{ model: User, as: 'user' }] },
+          { model: Appointment, as: 'appointment' }
+        ],
+        order: [['created_at', 'DESC']],
+        limit: parseInt(limit),
+        offset: parseInt(offset)
+      });
+
+      return res.json({
+        success: true,
+        data: rows,
+        metadata: {
+          page: parseInt(page),
+          limit: parseInt(limit),
+          total: count,
+          total_pages: Math.ceil(count / limit)
+        }
+      });
+    } catch (error) {
+      console.error('Get reviews error:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Internal server error'
+      });
+    }
+  },
+
+  /**
+   * Delete review (Admin only)
+   */
+  async deleteReview(req, res) {
+    try {
+      const { id } = req.params;
+
+      const review = await Review.findByPk(id);
+      if (!review) {
+        return res.status(404).json({
+          success: false,
+          message: 'Review not found'
+        });
+      }
+
+      await review.destroy();
+
+      return res.json({
+        success: true,
+        message: 'Review deleted successfully'
+      });
+    } catch (error) {
+      console.error('Delete review error:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Internal server error'
+      });
+    }
+  },
+
+  /**
+   * Create admin user
+   */
+  async createAdmin(req, res) {
+    try {
+      const { email, password, full_name, phone } = req.body;
+
+      // Check if email exists
+      const existingUser = await User.findOne({ where: { email } });
+      if (existingUser) {
+        return res.status(409).json({
+          success: false,
+          message: 'Email already exists'
+        });
+      }
+
+      // Hash password
+      const hashedPassword = await bcrypt.hash(password, 10);
+
+      // Create admin user
+      const admin = await User.create({
+        email,
+        password: hashedPassword,
+        full_name,
+        phone,
+        role: 'admin',
+        is_active: true,
+        is_verified: true,
+        email_verified_at: new Date()
+      });
+
+      return res.status(201).json({
+        success: true,
+        message: 'Admin created successfully',
+        data: {
+          id: admin.id,
+          email: admin.email,
+          full_name: admin.full_name
+        }
+      });
+    } catch (error) {
+      console.error('Create admin error:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Internal server error'
+      });
+    }
+  },
+
+  /**
+   * POST MANAGEMENT
+   */
+
+  // Get all posts
+  async getPosts(req, res) {
+    try {
+      const { page = 1, limit = 20, status, category, search } = req.query;
+      const offset = (page - 1) * limit;
+
+      const where = {};
+      if (status) where.status = status;
+      if (category) where.category = category;
+      if (search) {
+        where[Op.or] = [
+          { title: { [Op.like]: `%${search}%` } },
+          { summary: { [Op.like]: `%${search}%` } }
+        ];
+      }
+
+      const { count, rows } = await Post.findAndCountAll({
+        where,
+        include: [
+          {
+            model: User,
+            as: 'author',
+            attributes: ['id', 'full_name', 'email']
+          }
+        ],
+        order: [['created_at', 'DESC']],
+        limit: parseInt(limit),
+        offset: parseInt(offset)
+      });
+
+      return res.json({
+        success: true,
+        data: rows,
+        metadata: {
+          page: parseInt(page),
+          limit: parseInt(limit),
+          total: count,
+          total_pages: Math.ceil(count / limit)
+        }
+      });
+    } catch (error) {
+      console.error('Get posts error:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Internal server error'
+      });
+    }
+  },
+
+  // Show create post form
+  async showCreatePostForm(req, res) {
+    res.render('admin/posts/create', {
+      title: 'Tạo Bài Viết Mới'
+    });
+  },
+
+  // Show edit post form
+  async showEditPostForm(req, res) {
+    try {
+      const { id } = req.params;
+      const post = await Post.findByPk(id);
+
+      if (!post) {
+        return res.status(404).send('Post not found');
+      }
+
+      res.render('admin/posts/edit', {
+        title: 'Chỉnh Sửa Bài Viết',
+        post
+      });
+    } catch (error) {
+      console.error('Show edit post error:', error);
+      res.status(500).send('Internal server error');
+    }
+  },
+
+  // Show posts list
+  async showPostsList(req, res) {
+    res.render('admin/posts/index', {
+      title: 'Quản Lý Bài Viết'
+    });
+  },
+
+  // Create new post
+  async createPost(req, res) {
+    try {
+      const {
+        title,
+        slug,
+        summary,
+        content,
+        status,
+        category,
+        tags,
+        meta_title,
+        meta_description,
+        meta_keywords
+      } = req.body;
+
+      // Generate slug if not provided
+      let finalSlug = slug;
+      if (!finalSlug) {
+        finalSlug = title
+          .toLowerCase()
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .replace(/đ/g, 'd')
+          .replace(/[^a-z0-9\s-]/g, '')
+          .replace(/\s+/g, '-')
+          .replace(/-+/g, '-')
+          .trim();
+      }
+
+      // Handle thumbnail upload
+      let thumbnailUrl = null;
+      if (req.file) {
+        thumbnailUrl = `/uploads/${req.file.filename}`;
+      }
+
+      // Create post
+      const post = await Post.create({
+        title,
+        slug: finalSlug,
+        summary,
+        content,
+        thumbnail: thumbnailUrl,
+        category,
+        tags,
+        status: status || 'draft',
+        author_id: req.user.id,
+        meta_title,
+        meta_description,
+        meta_keywords,
+        published_at: status === 'published' ? new Date() : null
+      });
+
+      return res.json({
+        success: true,
+        message: 'Post created successfully',
+        data: post
+      });
+    } catch (error) {
+      console.error('Create post error:', error);
+      return res.status(500).json({
+        success: false,
+        message: error.message || 'Failed to create post'
+      });
+    }
+  },
+
+  // Update post
+  async updatePost(req, res) {
+    try {
+      const { id } = req.params;
+      const {
+        title,
+        slug,
+        summary,
+        content,
+        status,
+        category,
+        tags,
+        meta_title,
+        meta_description,
+        meta_keywords
+      } = req.body;
+
+      const post = await Post.findByPk(id);
+      if (!post) {
+        return res.status(404).json({
+          success: false,
+          message: 'Post not found'
+        });
+      }
+
+      // Handle thumbnail upload
+      let thumbnailUrl = post.thumbnail;
+      if (req.file) {
+        thumbnailUrl = `/uploads/${req.file.filename}`;
+      }
+
+      // Update post
+      await post.update({
+        title,
+        slug: slug || post.slug,
+        summary,
+        content,
+        thumbnail: thumbnailUrl,
+        category,
+        tags,
+        status: status || post.status,
+        meta_title,
+        meta_description,
+        meta_keywords,
+        published_at: status === 'published' && !post.published_at ? new Date() : post.published_at
+      });
+
+      return res.json({
+        success: true,
+        message: 'Post updated successfully',
+        data: post
+      });
+    } catch (error) {
+      console.error('Update post error:', error);
+      return res.status(500).json({
+        success: false,
+        message: error.message || 'Failed to update post'
+      });
+    }
+  },
+
+  // Delete post
+  async deletePost(req, res) {
+    try {
+      const { id } = req.params;
+
+      const post = await Post.findByPk(id);
+      if (!post) {
+        return res.status(404).json({
+          success: false,
+          message: 'Post not found'
+        });
+      }
+
+      await post.destroy();
+
+      return res.json({
+        success: true,
+        message: 'Post deleted successfully'
+      });
+    } catch (error) {
+      console.error('Delete post error:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to delete post'
+      });
+    }
+  },
+
+  // Upload image for CKEditor
+  async uploadImage(req, res) {
+    try {
+      if (!req.file) {
+        return res.status(400).json({
+          error: {
+            message: 'No file uploaded'
+          }
+        });
+      }
+
+      const imageUrl = `/uploads/${req.file.filename}`;
+
+      // CKEditor expects this format
+      return res.json({
+        url: imageUrl
+      });
+    } catch (error) {
+      console.error('Upload image error:', error);
+      return res.status(500).json({
+        error: {
+          message: 'Failed to upload image'
+        }
+      });
+    }
+  }
+};
+
+module.exports = adminController;

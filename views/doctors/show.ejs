@@ -1,0 +1,293 @@
+<%- contentFor('additionalStyles') %>
+<style>
+  .doctor-profile-header {
+    background: linear-gradient(135deg, #0066CC 0%, #004c99 100%);
+    color: white;
+    padding: 3rem 0;
+    margin-bottom: 2rem;
+  }
+  
+  .doctor-avatar-large {
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 5px solid white;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+  }
+  
+  .rating-stars {
+    color: #ffc107;
+    font-size: 1.2rem;
+  }
+  
+  .info-box {
+    background: #f8f9fa;
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+  }
+  
+  .review-card {
+    border-left: 4px solid var(--primary-color);
+    padding-left: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .rating-distribution {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.5rem;
+  }
+  
+  .rating-bar {
+    flex: 1;
+    height: 8px;
+    background: #e9ecef;
+    border-radius: 4px;
+    margin: 0 1rem;
+    overflow: hidden;
+  }
+  
+  .rating-bar-fill {
+    height: 100%;
+    background: #ffc107;
+    transition: width 0.3s ease;
+  }
+</style>
+<% -%>
+
+<section class="doctor-profile-header">
+  <div class="container">
+    <div class="row align-items-center">
+      <div class="col-md-3 text-center">
+        <img src="<%= doctor.user.avatar || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(doctor.user.full_name) + '&size=400&background=ffffff&color=0066CC' %>" 
+             alt="<%= doctor.user.full_name %>"
+             class="doctor-avatar-large"
+             onerror="this.src='https://placehold.co/200/0066CC/FFFFFF/png?text=Doctor'">
+      </div>
+      
+      <div class="col-md-9">
+        <h1 class="mb-2"><%= doctor.user.full_name %></h1>
+        <h5 class="mb-3">
+          <% if (doctor.specialty && doctor.specialty.icon) { %>
+            <i class="<%= doctor.specialty.icon %> me-2"></i>
+          <% } %>
+          <%= doctor.specialty ? doctor.specialty.name : 'Chuyên khoa chung' %>
+        </h5>
+        
+        <div class="rating-stars mb-3">
+          <% const rating = Number(doctor.rating) || 0; %>
+          <% for (let i = 1; i <= 5; i++) { %>
+            <i class="<%= i <= Math.round(rating) ? 'fas' : 'far' %> fa-star"></i>
+          <% } %>
+          <span class="ms-2 text-white"><%= rating.toFixed(1) %> / 5.0</span>
+          <span class="ms-2 text-white-50">(<%= reviewCount %> đánh giá)</span>
+        </div>
+        
+        <div class="row">
+          <div class="col-md-6">
+            <p class="mb-2">
+              <i class="fas fa-graduation-cap me-2"></i>
+              <strong><%= doctor.experience_years %></strong> năm kinh nghiệm
+            </p>
+            <% if (doctor.department) { %>
+              <p class="mb-2">
+                <i class="fas fa-building me-2"></i>
+                <%= doctor.department.name %>
+              </p>
+            <% } %>
+          </div>
+          <div class="col-md-6">
+            <p class="mb-2">
+              <i class="fas fa-money-bill-wave me-2"></i>
+              Phí tư vấn: <strong><%= doctor.consultation_price.toLocaleString('vi-VN') %>đ</strong>
+            </p>
+            <% if (doctor.user.phone) { %>
+              <p class="mb-2">
+                <i class="fas fa-phone me-2"></i>
+                <%= doctor.user.phone %>
+              </p>
+            <% } %>
+          </div>
+        </div>
+        
+        <div class="mt-3">
+          <a href="/appointments/book/<%= doctor.user_id %>" class="btn btn-light btn-lg">
+            <i class="fas fa-calendar-check me-2"></i>Đặt lịch khám
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="py-5">
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-8">
+        <!-- About Section -->
+        <div class="card mb-4">
+          <div class="card-body">
+            <h4 class="card-title mb-3">Giới thiệu</h4>
+            <% if (doctor.bio) { %>
+              <p class="text-muted"><%= doctor.bio %></p>
+            <% } else { %>
+              <p class="text-muted">Bác sĩ <%= doctor.user.full_name %> có <%= doctor.experience_years %> năm kinh nghiệm trong lĩnh vực <%= doctor.specialty ? doctor.specialty.name : 'y khoa' %>.</p>
+            <% } %>
+          </div>
+        </div>
+        
+        <!-- Education & Certificates -->
+        <% if (doctor.education || doctor.certificates) { %>
+          <div class="card mb-4">
+            <div class="card-body">
+              <h4 class="card-title mb-3">Học vấn & Chứng chỉ</h4>
+              
+              <% if (doctor.education) { %>
+                <h6 class="text-primary">Học vấn</h6>
+                <% try { %>
+                  <% const education = typeof doctor.education === 'string' ? JSON.parse(doctor.education) : doctor.education; %>
+                  <% if (Array.isArray(education)) { %>
+                    <ul>
+                      <% education.forEach(edu => { %>
+                        <li><%= edu %></li>
+                      <% }); %>
+                    </ul>
+                  <% } %>
+                <% } catch(e) { %>
+                  <p class="text-muted"><%= doctor.education %></p>
+                <% } %>
+              <% } %>
+              
+              <% if (doctor.certificates) { %>
+                <h6 class="text-primary mt-3">Chứng chỉ</h6>
+                <% try { %>
+                  <% const certificates = typeof doctor.certificates === 'string' ? JSON.parse(doctor.certificates) : doctor.certificates; %>
+                  <% if (Array.isArray(certificates)) { %>
+                    <ul>
+                      <% certificates.forEach(cert => { %>
+                        <li><%= cert %></li>
+                      <% }); %>
+                    </ul>
+                  <% } %>
+                <% } catch(e) { %>
+                  <p class="text-muted"><%= doctor.certificates %></p>
+                <% } %>
+              <% } %>
+            </div>
+          </div>
+        <% } %>
+        
+        <!-- Reviews Section -->
+        <div class="card mb-4">
+          <div class="card-body">
+            <h4 class="card-title mb-4">Đánh giá từ bệnh nhân</h4>
+            
+            <% if (reviews && reviews.length > 0) { %>
+              <% reviews.forEach(review => { %>
+                <% if (review && review.patient) { %>
+                  <div class="review-card">
+                    <div class="d-flex align-items-center mb-2">
+                      <img src="<%= review.patient.avatar || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(review.patient.full_name) + '&size=50' %>" 
+                           alt="<%= review.patient.full_name %>"
+                           class="rounded-circle me-3"
+                           style="width: 50px; height: 50px; object-fit: cover;">
+                      <div>
+                        <h6 class="mb-0"><%= review.patient.full_name %></h6>
+                        <small class="text-muted">
+                          <%= new Date(review.created_at).toLocaleDateString('vi-VN') %>
+                        </small>
+                      </div>
+                      <div class="ms-auto">
+                        <div class="rating-stars" style="font-size: 1rem;">
+                          <% for (let i = 1; i <= 5; i++) { %>
+                            <i class="<%= i <= review.rating ? 'fas' : 'far' %> fa-star"></i>
+                          <% } %>
+                        </div>
+                      </div>
+                    </div>
+                    <p class="text-muted mb-0"><%= review.comment %></p>
+                  </div>
+                <% } %>
+              <% }); %>
+              
+              <!-- Review Pagination -->
+              <% if (totalReviewPages > 1) { %>
+                <nav class="mt-4">
+                  <ul class="pagination justify-content-center">
+                    <% for (let i = 1; i <= totalReviewPages; i++) { %>
+                      <li class="page-item <%= currentReviewPage === i ? 'active' : '' %>">
+                        <a class="page-link" href="?review_page=<%= i %>"><%= i %></a>
+                      </li>
+                    <% } %>
+                  </ul>
+                </nav>
+              <% } %>
+            <% } else { %>
+              <p class="text-muted text-center">Chưa có đánh giá nào</p>
+            <% } %>
+          </div>
+        </div>
+      </div>
+      
+      <div class="col-lg-4">
+        <!-- Working Hours -->
+        <div class="card mb-4">
+          <div class="card-body">
+            <h5 class="card-title mb-3">Lịch làm việc</h5>
+            <% if (doctor.working_days && doctor.working_hours) { %>
+              <% try { %>
+                <% const workingDays = typeof doctor.working_days === 'string' ? JSON.parse(doctor.working_days) : doctor.working_days; %>
+                <% const daysOfWeek = ['Chủ nhật', 'Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7']; %>
+                <% for (let i = 1; i <= 7; i++) { %>
+                  <div class="d-flex justify-content-between mb-2">
+                    <span><%= daysOfWeek[i === 7 ? 0 : i] %>:</span>
+                    <strong><%= workingDays && workingDays.includes(i) ? doctor.working_hours : 'Nghỉ' %></strong>
+                  </div>
+                <% } %>
+              <% } catch(e) { %>
+                <p class="text-muted">Liên hệ để biết lịch làm việc</p>
+              <% } %>
+            <% } else { %>
+              <p class="text-muted">Liên hệ để biết lịch làm việc</p>
+            <% } %>
+          </div>
+        </div>
+        
+        <!-- Rating Distribution -->
+        <% if (reviewCount > 0) { %>
+          <div class="card mb-4">
+            <div class="card-body">
+              <h5 class="card-title mb-3">Phân bố đánh giá</h5>
+              <% for (let star = 5; star >= 1; star--) { %>
+                <% const count = ratingDistribution[star] || 0; %>
+                <% const percentage = reviewCount > 0 ? (count / reviewCount * 100) : 0; %>
+                <% const widthStyle = 'width: ' + percentage + '%'; %>
+                <div class="rating-distribution">
+                  <span style="width: 60px;"><%= star %> <i class="fas fa-star text-warning"></i></span>
+                  <div class="rating-bar">
+                    <div class="rating-bar-fill" style="<%= widthStyle %>"></div>
+                  </div>
+                  <span style="width: 50px; text-align: right;"><%= count %></span>
+                </div>
+              <% } %>
+            </div>
+          </div>
+        <% } %>
+        
+        <!-- Quick Booking -->
+        <div class="card bg-primary text-white">
+          <div class="card-body text-center">
+            <i class="fas fa-calendar-alt fa-3x mb-3"></i>
+            <h5>Đặt lịch ngay</h5>
+            <p class="mb-3">Chọn ngày giờ phù hợp với bạn</p>
+            <a href="/appointments/book/<%= doctor.user_id %>" class="btn btn-light">
+              <i class="fas fa-calendar-check me-2"></i>Đặt lịch khám
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

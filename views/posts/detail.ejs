@@ -1,0 +1,17 @@
+<div class="container">
+  <article class="post-detail">
+    <h1><%= post.title %></h1>
+    <div class="post-meta">
+      <span>Tác giả: <%= post.author.fullName %></span>
+      <span>Ngày đăng: <%= new Date(post.publishedAt).toLocaleDateString('vi-VN') %></span>
+      <span>Danh mục: <%= post.Category.name %></span>
+      <span><%= post.views %> lượt xem</span>
+    </div>
+    
+    <img src="<%= post.thumbnail || '/images/default-post.jpg' %>" alt="<%= post.title %>" class="post-thumbnail">
+    
+    <div class="post-content">
+      <%- post.content %>
+    </div>
+  </article>
+</div>

@@ -1,0 +1,13 @@
+<div class="container">
+  <h1>Chuyên khoa</h1>
+  
+  <div class="departments-list">
+    <% departments.forEach(dept => { %>
+      <div class="department-item">
+        <h2><%= dept.name %></h2>
+        <p><%= dept.description %></p>
+        <p>Số bác sĩ: <%= dept.Doctors.length %></p>
+      </div>
+    <% }) %>
+  </div>
+</div>

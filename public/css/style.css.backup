@@ -1,0 +1,376 @@
+/* ============================================
+   HOSPITAL PORTAL CUSTOM STYLES
+   Màu sắc y tế: Primary #0066CC (Medical Blue)
+   ============================================ */
+
+/* ===== ROOT VARIABLES ===== */
+:root {
+    --primary-color: #0066CC;
+    --secondary-color: #00A6A0;
+    --danger-color: #DC3545;
+    --warning-color: #FFC107;
+    --success-color: #28A745;
+    --dark-color: #2C3E50;
+    --light-gray: #F8F9FA;
+    --border-color: #E0E0E0;
+}
+
+/* ===== GLOBAL STYLES ===== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Roboto', sans-serif;
+    line-height: 1.6;
+    color: #333;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+main {
+    flex: 1;
+}
+
+/* ===== HEADER STYLES ===== */
+header {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 1000 !important;
+    background: white !important;
+}
+
+.top-bar {
+    font-size: 14px;
+}
+
+.main-header .logo:hover {
+    opacity: 0.9;
+}
+
+.navbar-nav .nav-link {
+    font-weight: 500;
+    padding: 0.5rem 1rem !important;
+    transition: color 0.3s;
+}
+
+.navbar-nav .nav-link:hover,
+.navbar-nav .nav-link.active {
+    color: var(--primary-color) !important;
+}
+
+.btn-appointment {
+    padding: 0.5rem 1.5rem;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(0, 102, 204, 0.3);
+}
+
+.btn-appointment:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 102, 204, 0.4);
+}
+
+/* ===== HERO SLIDER ===== */
+.hero-slider {
+    position: relative;
+    height: 600px;
+}
+
+.heroSwiper {
+    height: 100%;
+}
+
+.slide-content {
+    height: 600px;
+    display: flex;
+    align-items: center;
+    padding: 100px 0;
+}
+
+.swiper-button-next,
+.swiper-button-prev {
+    color: white;
+}
+
+.swiper-pagination-bullet-active {
+    background: white;
+}
+
+/* ===== QUICK STATS ===== */
+.stat-item {
+    padding: 20px;
+    transition: transform 0.3s;
+}
+
+.stat-item:hover {
+    transform: translateY(-5px);
+}
+
+.counter {
+    display: inline-block;
+}
+
+/* ===== SPECIALTY CARDS ===== */
+.specialty-card {
+    transition: all 0.3s;
+    cursor: pointer;
+}
+
+.specialty-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15) !important;
+}
+
+.specialty-icon {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #E3F2FD 0%, #BBDEFB 100%);
+    border-radius: 50%;
+}
+
+/* ===== DOCTOR CARDS ===== */
+.doctor-card {
+    overflow: hidden;
+    transition: all 0.3s;
+}
+
+.doctor-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1) !important;
+}
+
+.doctor-image-wrapper {
+    position: relative;
+    overflow: hidden;
+    height: 300px;
+}
+
+.doctor-image-wrapper img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s;
+}
+
+.doctor-card:hover .doctor-image-wrapper img {
+    transform: scale(1.05);
+}
+
+.doctor-rating {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: white;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-weight: 600;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.doctorsSwiper {
+    padding: 20px 0 50px;
+}
+
+.doctorsSwiper .swiper-slide {
+    height: auto;
+}
+
+/* ===== POST CARDS ===== */
+.post-card {
+    transition: all 0.3s;
+    overflow: hidden;
+}
+
+.post-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15) !important;
+}
+
+.post-thumbnail {
+    position: relative;
+    overflow: hidden;
+    height: 250px;
+}
+
+.post-thumbnail img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s;
+}
+
+.post-card:hover .post-thumbnail img {
+    transform: scale(1.1);
+}
+
+.post-badge {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    padding: 5px 15px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.post-meta {
+    font-size: 13px;
+}
+
+/* ===== HOVER EFFECTS ===== */
+.hover-lift {
+    transition: all 0.3s;
+}
+
+.hover-lift:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1) !important;
+}
+
+.hover-primary:hover {
+    color: var(--primary-color) !important;
+}
+
+/* ===== FOOTER STYLES ===== */
+.footer {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+}
+
+.footer h5, .footer h6 {
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.footer-links li {
+    margin-bottom: 10px;
+}
+
+.footer-links a {
+    color: rgba(255, 255, 255, 0.7);
+    text-decoration: none;
+    transition: all 0.3s;
+}
+
+.footer-links a:hover {
+    color: white;
+    padding-left: 5px;
+}
+
+.contact-info li {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 15px;
+}
+
+.contact-info a {
+    text-decoration: none;
+    transition: color 0.3s;
+}
+
+.contact-info a:hover {
+    color: var(--primary-color) !important;
+}
+
+.social-links .btn:hover {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    transform: translateY(-3px);
+}
+
+/* ===== BACK TO TOP BUTTON ===== */
+#backToTop {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: none;
+    z-index: 1000;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+#backToTop.show {
+    display: block;
+    animation: fadeInUp 0.3s;
+}
+
+/* ===== ANIMATIONS ===== */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ===== SECTION TITLE ===== */
+.section-title h2 {
+    position: relative;
+    display: inline-block;
+    padding-bottom: 15px;
+}
+
+.section-title h2::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 3px;
+    background: var(--primary-color);
+}
+
+/* ===== CALL TO ACTION ===== */
+.cta-section {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+}
+
+/* ===== RESPONSIVE ===== */
+@media (max-width: 768px) {
+    .hero-slider,
+    .slide-content {
+        height: 400px;
+    }
+    
+    .slide-content h1 {
+        font-size: 2rem !important;
+    }
+    
+    .slide-content .lead {
+        font-size: 1rem;
+    }
+    
+    .doctor-image-wrapper {
+        height: 250px;
+    }
+    
+    .post-thumbnail {
+        height: 200px;
+    }
+}
+
+/* ===== UTILITY CLASSES ===== */
+.btn-floating {
+    padding: 0;
+    line-height: 50px;
+}
+
+.text-white-50 {
+    color: rgba(255, 255, 255, 0.7) !important;
+}
+
+.shadow-sm {
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08) !important;
+}

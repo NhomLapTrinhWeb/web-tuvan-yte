@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Đăng nhập - Hospital Portal</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    :root {
+      --primary-color: #0066CC;
+      --secondary-color: #00A5E3;
+    }
+    
+    body {
+      background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    .auth-container {
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      overflow: hidden;
+      max-width: 450px;
+      width: 100%;
+      margin: 20px;
+    }
+
+    .auth-header {
+      background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+      color: white;
+      padding: 40px 30px;
+      text-align: center;
+    }
+
+    .auth-header i {
+      font-size: 60px;
+      margin-bottom: 15px;
+    }
+
+    .auth-header h2 {
+      margin: 0;
+      font-weight: 700;
+    }
+
+    .auth-body {
+      padding: 40px 30px;
+    }
+
+    .form-control {
+      border-radius: 10px;
+      padding: 12px 15px;
+      border: 1px solid #ddd;
+      transition: all 0.3s;
+    }
+
+    .form-control:focus {
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+    }
+
+    .btn-primary {
+      background: var(--primary-color);
+      border: none;
+      border-radius: 10px;
+      padding: 12px;
+      font-weight: 600;
+      width: 100%;
+      transition: all 0.3s;
+    }
+
+    .btn-primary:hover {
+      background: #0052a3;
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(0, 102, 204, 0.3);
+    }
+
+    .input-group {
+      position: relative;
+      margin-bottom: 20px;
+    }
+
+    .input-group i {
+      position: absolute;
+      left: 15px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #999;
+      z-index: 10;
+    }
+
+    .input-group .form-control {
+      padding-left: 45px;
+    }
+
+    .alert {
+      border-radius: 10px;
+      padding: 12px 15px;
+    }
+
+    .link-text {
+      color: var(--primary-color);
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .link-text:hover {
+      text-decoration: underline;
+    }
+
+    .divider {
+      text-align: center;
+      margin: 25px 0;
+      position: relative;
+    }
+
+    .divider::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 50%;
+      width: 45%;
+      height: 1px;
+      background: #ddd;
+    }
+
+    .divider::after {
+      content: '';
+      position: absolute;
+      right: 0;
+      top: 50%;
+      width: 45%;
+      height: 1px;
+      background: #ddd;
+    }
+  </style>
+</head>
+<body>
+  <div class="auth-container">
+    <div class="auth-header">
+      <i class="fas fa-hospital-user"></i>
+      <h2>Đăng nhập</h2>
+      <p class="mb-0">Chào mừng bạn quay trở lại!</p>
+    </div>
+
+    <div class="auth-body">
+      <div id="alert-container"></div>
+
+      <form id="loginForm">
+        <div class="input-group">
+          <i class="fas fa-envelope"></i>
+          <input type="email" class="form-control" id="email" name="email" 
+                 placeholder="Email của bạn" required>
+        </div>
+
+        <div class="input-group">
+          <i class="fas fa-lock"></i>
+          <input type="password" class="form-control" id="password" name="password" 
+                 placeholder="Mật khẩu" required>
+        </div>
+
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <div class="form-check">
+            <input type="checkbox" class="form-check-input" id="remember">
+            <label class="form-check-label" for="remember">Ghi nhớ đăng nhập</label>
+          </div>
+          <a href="/forgot-password" class="link-text">Quên mật khẩu?</a>
+        </div>
+
+        <button type="submit" class="btn btn-primary">
+          <i class="fas fa-sign-in-alt me-2"></i>Đăng nhập
+        </button>
+      </form>
+
+      <div class="divider">
+        <span class="bg-white px-3 text-muted">hoặc</span>
+      </div>
+
+      <div class="text-center">
+        <p class="mb-0">Chưa có tài khoản? 
+          <a href="/register" class="link-text">Đăng ký ngay</a>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    const loginForm = document.getElementById('loginForm');
+    const alertContainer = document.getElementById('alert-container');
+
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+
+      try {
+        const response = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ email, password })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          showAlert('Đăng nhập thành công! Đang chuyển hướng...', 'success');
+          
+          // Redirect based on role
+          setTimeout(() => {
+            if (data.data.user.role === 'admin') {
+              window.location.href = '/admin/dashboard';
+            } else if (data.data.user.role === 'doctor') {
+              window.location.href = '/doctor/dashboard';
+            } else {
+              window.location.href = '/';
+            }
+          }, 1500);
+        } else {
+          showAlert(data.message || 'Đăng nhập thất bại', 'danger');
+        }
+      } catch (error) {
+        console.error('Login error:', error);
+        showAlert('Có lỗi xảy ra. Vui lòng thử lại sau.', 'danger');
+      }
+    });
+
+    function showAlert(message, type) {
+      alertContainer.innerHTML = `
+        <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+          ${message}
+          <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+      `;
+    }
+  </script>
+</body>
+</html>

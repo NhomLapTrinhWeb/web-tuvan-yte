@@ -1,111 +1,43 @@
-<%- contentFor('additionalStyles') %>
-<style>
-  .specialty-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 2rem;
-  }
-  
-  .specialty-card {
-    text-align: center;
-    padding: 2rem;
-    transition: all 0.3s ease;
-    height: 100%;
-  }
-  
-  .specialty-card:hover {
-    transform: translateY(-10px);
-    box-shadow: 0 15px 35px rgba(0, 102, 204, 0.2) !important;
-  }
-  
-  .specialty-icon {
-    font-size: 3.5rem;
-    color: var(--primary-color);
-    margin-bottom: 1.5rem;
-    transition: all 0.3s ease;
-  }
-  
-  .specialty-card:hover .specialty-icon {
-    transform: scale(1.1);
-  }
-  
-  .doctor-count-badge {
-    background: #e3f2fd;
-    color: var(--primary-color);
-    padding: 8px 15px;
-    border-radius: 20px;
-    font-size: 0.9rem;
-    display: inline-block;
-    margin-top: 1rem;
-  }
-</style>
-<% -%>
+<div class="bg-light py-5">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h1 class="fw-bold text-primary">Các Chuyên Khoa</h1>
+            <p class="text-muted lead">Hệ thống chuyên khoa đa dạng đáp ứng mọi nhu cầu khám chữa bệnh</p>
+        </div>
 
-<section class="py-5 bg-light">
-  <div class="container">
-    <div class="text-center mb-5">
-      <h1 class="display-4 fw-bold mb-3">Chuyên Khoa</h1>
-      <p class="lead text-muted">Đội ngũ bác sĩ chuyên môn cao trong nhiều lĩnh vực y khoa</p>
+        <div class="row g-4">
+            <% if (specialties && specialties.length > 0) { %>
+                <% specialties.forEach(spec => { %>
+                    <div class="col-md-6 col-lg-4">
+                        <div class="card h-100 border-0 shadow-sm hover-card text-center p-4">
+                            <div class="mb-3">
+                                <div class="bg-primary bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                                    <i class="fas fa-stethoscope fa-2x text-primary"></i>
+                                </div>
+                            </div>
+                            <h4 class="fw-bold mb-3"><%= spec.name %></h4>
+                            <p class="text-muted small mb-4 line-clamp-2">
+                                <%= spec.description || 'Chuyên khoa hàng đầu với trang thiết bị hiện đại và đội ngũ bác sĩ giàu kinh nghiệm.' %>
+                            </p>
+                            <a href="/specialties/<%= spec.slug %>" class="btn btn-outline-primary rounded-pill px-4">
+                                Xem chi tiết & Bác sĩ
+                            </a>
+                        </div>
+                    </div>
+                <% }) %>
+            <% } else { %>
+                <div class="col-12 text-center py-5">
+                    <p class="text-muted">Chưa có dữ liệu chuyên khoa.</p>
+                </div>
+            <% } %>
+        </div>
     </div>
-    
-    <% if (specialties && specialties.length > 0) { %>
-      <div class="specialty-grid">
-        <% specialties.forEach(specialty => { %>
-          <% if (specialty) { %>
-            <div class="card specialty-card border-0 shadow-sm">
-              <% if (specialty.icon) { %>
-                <div class="specialty-icon">
-                  <i class="<%= specialty.icon %>"></i>
-                </div>
-              <% } else { %>
-                <div class="specialty-icon">
-                  <i class="fas fa-stethoscope"></i>
-                </div>
-              <% } %>
-              
-              <h4 class="mb-3">
-                <a href="/specialties/<%= specialty.slug %>" class="text-decoration-none text-dark hover-primary">
-                  <%= specialty.name %>
-                </a>
-              </h4>
-              
-              <% if (specialty.description) { %>
-                <p class="text-muted mb-3">
-                  <%= specialty.description.substring(0, 100) %><%= specialty.description.length > 100 ? '...' : '' %>
-                </p>
-              <% } %>
-              
-              <div class="doctor-count-badge">
-                <i class="fas fa-user-md me-2"></i>
-                <%= specialty.doctorCount || 0 %> bác sĩ
-              </div>
-              
-              <div class="mt-3">
-                <a href="/specialties/<%= specialty.slug %>" class="btn btn-outline-primary">
-                  Xem bác sĩ <i class="fas fa-arrow-right ms-2"></i>
-                </a>
-              </div>
-            </div>
-          <% } %>
-        <% }); %>
-      </div>
-    <% } else { %>
-      <div class="text-center py-5">
-        <i class="fas fa-heartbeat fa-4x text-muted mb-3"></i>
-        <h4>Chưa có chuyên khoa nào</h4>
-        <p class="text-muted">Vui lòng quay lại sau</p>
-      </div>
-    <% } %>
-  </div>
-</section>
+</div>
 
-<!-- CTA Section -->
-<section class="py-5 bg-primary text-white">
-  <div class="container text-center">
-    <h2 class="mb-3">Cần tư vấn sức khỏe?</h2>
-    <p class="lead mb-4">Đội ngũ bác sĩ chuyên môn sẵn sàng hỗ trợ bạn</p>
-    <a href="/doctors" class="btn btn-light btn-lg">
-      <i class="fas fa-search me-2"></i>Tìm bác sĩ ngay
-    </a>
-  </div>
-</section>
+<style>
+    .hover-card { transition: transform 0.3s ease, box-shadow 0.3s ease; }
+    .hover-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important; }
+    .line-clamp-2 {
+        display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+    }
+</style>

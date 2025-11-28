@@ -1,193 +1,85 @@
-<%- contentFor('additionalStyles') %>
-<style>
-  .category-tabs {
-    background: #f8f9fa;
-    padding: 1.5rem 0;
-    margin-bottom: 2rem;
-  }
-  
-  .category-tabs .nav-link {
-    color: #6c757d;
-    border: none;
-    border-radius: 25px;
-    padding: 10px 25px;
-    margin: 0 5px;
-    transition: all 0.3s ease;
-  }
-  
-  .category-tabs .nav-link:hover {
-    background: #e9ecef;
-    color: var(--primary-color);
-  }
-  
-  .category-tabs .nav-link.active {
-    background: var(--primary-color);
-    color: white;
-  }
-  
-  .post-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: 2rem;
-  }
-  
-  .post-card {
-    transition: all 0.3s ease;
-    height: 100%;
-  }
-  
-  .post-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 30px rgba(0, 102, 204, 0.15) !important;
-  }
-  
-  .post-thumbnail {
-    position: relative;
-    height: 250px;
-    overflow: hidden;
-    border-radius: 8px 8px 0 0;
-  }
-  
-  .post-thumbnail img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    transition: transform 0.3s ease;
-  }
-  
-  .post-card:hover .post-thumbnail img {
-    transform: scale(1.05);
-  }
-  
-  .post-badge {
-    position: absolute;
-    top: 15px;
-    left: 15px;
-    padding: 8px 15px;
-    border-radius: 25px;
-    font-size: 0.85rem;
-    font-weight: 600;
-  }
-  
-  .post-meta {
-    font-size: 0.9rem;
-  }
-</style>
-<% -%>
+<div class="bg-light py-5">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h1 class="fw-bold text-primary">Tin Tức Y Tế & Sức Khỏe</h1>
+            <p class="text-muted lead">Cập nhật những thông tin y khoa mới nhất từ đội ngũ chuyên gia</p>
+        </div>
 
-<section class="py-5">
-  <div class="container">
-    <div class="row mb-4">
-      <div class="col-md-6">
-        <h2>Tin Tức Y Tế</h2>
-        <p class="text-muted">Cập nhật kiến thức sức khỏe và tin tức y tế mới nhất</p>
-      </div>
-      
-      <div class="col-md-6">
-        <form method="GET" action="/posts" class="d-flex gap-2">
-          <% if (filters.category) { %>
-            <input type="hidden" name="category" value="<%= filters.category %>">
-          <% } %>
-          <input type="text" name="search" class="form-control" placeholder="Tìm kiếm bài viết..." value="<%= filters.search %>">
-          <button type="submit" class="btn btn-primary">
-            <i class="fas fa-search"></i>
-          </button>
-        </form>
-      </div>
-    </div>
-    
-    <% if (posts && posts.length > 0) { %>
-      <div class="post-grid">
-        <% posts.forEach(post => { %>
-          <% if (post && post.category) { %>
-            <div class="card post-card border-0 shadow-sm">
-              <div class="post-thumbnail">
-                <img src="<%= post.thumbnail || 'https://source.unsplash.com/600x400/?medical,health,hospital' %>" 
-                     alt="<%= post.title %>"
-                     onerror="this.src='https://placehold.co/600x400/0066CC/FFFFFF/png?text=News'">
-                <span class="post-badge text-white bg-primary">
-                  <%= post.category.name %>
-                </span>
-              </div>
-              
-              <div class="card-body">
-                <div class="post-meta text-muted mb-2">
-                  <small>
-                    <i class="fas fa-calendar me-1"></i>
-                    <%= new Date(post.published_at || post.created_at).toLocaleDateString('vi-VN') %>
-                  </small>
-                  <small class="ms-3">
-                    <i class="fas fa-eye me-1"></i><%= post.views || 0 %> lượt xem
-                  </small>
-                </div>
-                
-                <h5 class="card-title fw-bold mb-3">
-                  <a href="/posts/<%= post.slug %>" class="text-decoration-none text-dark hover-primary">
-                    <%= post.title %>
-                  </a>
-                </h5>
-                
-                <p class="card-text text-muted mb-3"><%= post.excerpt %></p>
-                
-                <% if (post.author) { %>
-                  <div class="d-flex align-items-center justify-content-between">
-                    <div class="d-flex align-items-center">
-                      <img src="<%= post.author.avatar || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(post.author.full_name) + '&size=40' %>" 
-                           alt="<%= post.author.full_name %>"
-                           class="rounded-circle me-2"
-                           style="width: 30px; height: 30px; object-fit: cover;">
-                      <small class="text-muted"><%= post.author.full_name %></small>
+        <div class="row g-4">
+            <% if (posts && posts.length > 0) { %>
+                <% posts.forEach(post => { %>
+                    <div class="col-md-4">
+                        <div class="card h-100 border-0 shadow-sm hover-shadow transition-hover">
+                            <a href="/posts/<%= post.slug %>" class="overflow-hidden">
+                                <img src="<%= post.thumbnail || 'https://img.freepik.com/free-photo/medical-banner-with-stethoscope_23-2149611199.jpg' %>"
+                                     class="card-img-top"
+                                     alt="<%= post.title %>"
+                                     style="height: 220px; object-fit: cover; transition: transform 0.3s ease;">
+                            </a>
+
+                            <div class="card-body p-4">
+                                <div class="d-flex justify-content-between align-items-center mb-2 small">
+                                    <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill">
+                                        <%= post.category ? post.category.toUpperCase() : 'Y TẾ' %>
+                                    </span>
+                                    <span class="text-muted">
+                                        <i class="far fa-clock me-1"></i>
+                                        <%= new Date(post.created_at).toLocaleDateString('vi-VN') %>
+                                    </span>
+                                </div>
+
+                                <h5 class="card-title fw-bold mt-3 mb-3">
+                                    <a href="/posts/<%= post.slug %>" class="text-decoration-none text-dark hover-primary">
+                                        <%= post.title %>
+                                    </a>
+                                </h5>
+
+                                <p class="card-text text-muted small line-clamp-3">
+                                    <%= post.summary ? post.summary : 'Bấm để xem chi tiết nội dung bài viết...' %>
+                                </p>
+                            </div>
+
+                            <div class="card-footer bg-white border-0 p-4 pt-0">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div class="small text-muted">
+                                        <i class="fas fa-user-edit me-1"></i>
+                                        <%= post.author ? post.author.full_name : 'Admin' %>
+                                    </div>
+                                    <a href="/posts/<%= post.slug %>" class="btn btn-outline-primary btn-sm rounded-pill px-3">
+                                        Đọc tiếp <i class="fas fa-arrow-right ms-1"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <a href="/posts/<%= post.slug %>" class="btn btn-sm btn-outline-primary">
-                      Đọc thêm <i class="fas fa-arrow-right ms-1"></i>
-                    </a>
-                  </div>
-                <% } %>
-              </div>
-            </div>
-          <% } %>
-        <% }); %>
-      </div>
-      
-      <!-- Pagination -->
-      <% if (totalPages > 1) { %>
-        <nav aria-label="Post pagination" class="mt-5">
-          <ul class="pagination justify-content-center">
-            <li class="page-item <%= currentPage === 1 ? 'disabled' : '' %>">
-              <a class="page-link" href="?page=<%= currentPage - 1 %><%= filters.category ? '&category=' + filters.category : '' %><%= filters.search ? '&search=' + encodeURIComponent(filters.search) : '' %>">
-                <i class="fas fa-chevron-left"></i>
-              </a>
-            </li>
-            
-            <% for (let i = 1; i <= totalPages; i++) { %>
-              <% if (i === 1 || i === totalPages || (i >= currentPage - 2 && i <= currentPage + 2)) { %>
-                <li class="page-item <%= currentPage === i ? 'active' : '' %>">
-                  <a class="page-link" href="?page=<%= i %><%= filters.category ? '&category=' + filters.category : '' %><%= filters.search ? '&search=' + encodeURIComponent(filters.search) : '' %>">
-                    <%= i %>
-                  </a>
-                </li>
-              <% } else if (i === currentPage - 3 || i === currentPage + 3) { %>
-                <li class="page-item disabled">
-                  <span class="page-link">...</span>
-                </li>
-              <% } %>
+                <% }) %>
+            <% } else { %>
+                <div class="col-12 text-center py-5">
+                    <div class="mb-3 text-muted">
+                        <i class="fas fa-newspaper fa-4x opacity-50"></i>
+                    </div>
+                    <h4>Chưa có bài viết nào</h4>
+                    <p class="text-muted">Vui lòng quay lại sau.</p>
+                </div>
             <% } %>
-            
-            <li class="page-item <%= currentPage === totalPages ? 'disabled' : '' %>">
-              <a class="page-link" href="?page=<%= currentPage + 1 %><%= filters.category ? '&category=' + filters.category : '' %><%= filters.search ? '&search=' + encodeURIComponent(filters.search) : '' %>">
-                <i class="fas fa-chevron-right"></i>
-              </a>
-            </li>
-          </ul>
-        </nav>
-      <% } %>
-    <% } else { %>
-      <div class="text-center py-5">
-        <i class="fas fa-newspaper fa-4x text-muted mb-3"></i>
-        <h4>Không tìm thấy bài viết</h4>
-        <p class="text-muted">Vui lòng thử lại với từ khóa khác</p>
-        <a href="/posts" class="btn btn-primary">Xem tất cả bài viết</a>
-      </div>
-    <% } %>
-  </div>
-</section>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* CSS phụ trợ: Hiệu ứng zoom ảnh khi di chuột */
+    .hover-shadow:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 .5rem 1rem rgba(0,0,0,.15)!important;
+    }
+    .card:hover .card-img-top {
+        transform: scale(1.05);
+    }
+    /* Cắt dòng văn bản dài */
+    .line-clamp-3 {
+        display: -webkit-box;
+        -webkit-line-clamp: 3;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+</style>

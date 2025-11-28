@@ -1,0 +1,39 @@
+<div class="card shadow-sm border-0">
+    <div class="card-header bg-primary text-white">
+        <h5 class="mb-0"><i class="fas fa-file-medical-alt me-2"></i>Ghi Hồ Sơ Bệnh Án</h5>
+    </div>
+    <div class="card-body p-4">
+        <div class="alert alert-light border mb-4">
+            <strong>Bệnh nhân:</strong> <%= appointment.Patient.user.full_name %> <br>
+            <strong>Ngày khám:</strong> <%= new Date(appointment.appointment_date).toLocaleDateString('vi-VN') %>
+        </div>
+
+        <form action="/medical-records/create" method="POST">
+            <input type="hidden" name="appointment_id" value="<%= appointment.id %>">
+
+            <div class="mb-3">
+                <label class="form-label fw-bold">Triệu chứng lâm sàng</label>
+                <textarea class="form-control" name="symptoms" rows="3" required placeholder="VD: Ho, sốt, đau họng..."></textarea>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-bold text-danger">Chẩn đoán bệnh (*)</label>
+                <input type="text" class="form-control" name="diagnosis" required placeholder="VD: Viêm họng cấp">
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-bold">Đơn thuốc & Điều trị</label>
+                <textarea class="form-control" name="prescription" rows="5" placeholder="- Thuốc A: Uống sáng/chiều...&#10;- Thuốc B: Uống sau ăn..."></textarea>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-bold">Lời dặn của bác sĩ</label>
+                <textarea class="form-control" name="notes" rows="2" placeholder="Tái khám sau 7 ngày..."></textarea>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-lg w-100">
+                <i class="fas fa-save me-2"></i>Lưu & Hoàn Tất Khám
+            </button>
+        </form>
+    </div>
+</div>

@@ -1,151 +1,61 @@
 const { Post, User } = require('../models');
-const { Op } = require('sequelize');
 
-class PostController {
-  // GET /posts - Danh sách bài viết với filter và pagination
-  async index(req, res) {
+const postController = {
+  // 1. Hiển thị danh sách bài viết
+  index: async (req, res) => {
     try {
-      const page = parseInt(req.query.page) || 1;
-      const limit = 9;
-      const offset = (page - 1) * limit;
-      
-      // Build where clause
-      const where = {
-        status: 'published'
-      };
-      
-      // Filter by category
-      if (req.query.category) {
-        where.category = req.query.category;
-      }
-      
-      // Search by title or excerpt
-      if (req.query.search) {
-        where[Op.or] = [
-          {
-            title: {
-              [Op.like]: `%${req.query.search}%`
-            }
-          },
-          {
-            excerpt: {
-              [Op.like]: `%${req.query.search}%`
-            }
-          }
-        ];
-      }
-      
-      // Get posts with pagination
-      const { count, rows: posts } = await Post.findAndCountAll({
-        where,
+      const posts = await Post.findAll({
+        where: { status: 'published' }, // Chỉ lấy bài đã xuất bản
         include: [
-          {
-            model: User,
-            as: 'author',
-            attributes: ['id', 'full_name', 'avatar']
-          }
+          { model: User, as: 'author', attributes: ['full_name'] }
         ],
-        limit,
-        offset,
-        order: [['published_at', 'DESC']],
-        distinct: true
+        order: [['created_at', 'DESC']]
       });
-      
-      // Get categories from Post enum
-      const categories = [
-        { value: 'health_tips', label: 'Mẹo sức khỏe' },
-        { value: 'news', label: 'Tin tức' },
-        { value: 'disease_info', label: 'Thông tin bệnh' },
-        { value: 'doctor_advice', label: 'Lời khuyên bác sĩ' },
-        { value: 'lifestyle', label: 'Lối sống' }
-      ];
-      
-      const totalPages = Math.ceil(count / limit);
-      
+
+      // Render file giao diện views/posts/index.ejs
       res.render('posts/index', {
-        pageTitle: 'Tin Tức Y Tế',
-        posts,
-        categories,
-        currentPage: page,
-        totalPages,
-        totalPosts: count,
-        currentPath: req.path,
-        filters: {
-          category: req.query.category || '',
-          search: req.query.search || ''
-        }
+        pageTitle: 'Tin tức Y tế',
+        posts: posts
       });
     } catch (error) {
-      console.error('Error in PostController.index:', error);
-      res.status(500).send('<h1>Lỗi</h1><p>Không thể tải danh sách bài viết</p>');
+      console.error('Get posts error:', error);
+      res.status(500).send('Lỗi server: ' + error.message);
     }
-  }
-  
-  // GET /posts/:slug - Chi tiết bài viết
-  async show(req, res) {
+  },
+
+  // 2. Hiển thị chi tiết 1 bài viết
+  show: async (req, res) => {
     try {
-      const slug = req.params.slug;
-      
-      // Get post details
+      const { slug } = req.params;
       const post = await Post.findOne({
         where: { slug, status: 'published' },
-        include: [
-          {
-            model: User,
-            as: 'author',
-            attributes: ['id', 'full_name', 'avatar', 'email']
-          }
-        ]
+        include: [{ model: User, as: 'author', attributes: ['full_name'] }]
       });
-      
+
       if (!post) {
-        return res.status(404).send('<h1>404</h1><p>Bài viết không tồn tại</p><a href="/posts">Quay lại</a>');
+        return res.status(404).render('errors/404', { pageTitle: 'Không tìm thấy bài viết' });
       }
-      
-      // Increment view count
-      await post.increment('views');
-      
-      // Get related posts (same category, exclude current post)
+
+      // Lấy thêm bài viết liên quan (cùng danh mục, trừ bài hiện tại)
       const relatedPosts = await Post.findAll({
         where: {
-          category: post.category,
-          id: { [Op.ne]: post.id },
-          status: 'published'
+            category: post.category,
+            status: 'published',
+            id: { [require('sequelize').Op.ne]: post.id } // Loại trừ bài hiện tại
         },
-        include: [
-          {
-            model: User,
-            as: 'author',
-            attributes: ['id', 'full_name']
-          }
-        ],
-        limit: 4,
-        order: [['published_at', 'DESC']]
+        limit: 3
       });
-      
-      // Get latest posts for sidebar
-      const latestPosts = await Post.findAll({
-        where: {
-          status: 'published',
-          id: { [Op.ne]: post.id }
-        },
-        attributes: ['id', 'title', 'slug', 'thumbnail', 'published_at', 'views'],
-        limit: 5,
-        order: [['published_at', 'DESC']]
-      });
-      
-      res.render('posts/show', {
+
+      res.render('posts/detail', {
         pageTitle: post.title,
         post,
-        relatedPosts,
-        latestPosts,
-        currentPath: req.path
+        relatedPosts
       });
     } catch (error) {
-      console.error('Error in PostController.show:', error);
-      res.status(500).send('<h1>Lỗi</h1><p>Không thể tải bài viết</p>');
+      console.error('Get post detail error:', error);
+      res.status(500).send('Lỗi server');
     }
   }
-}
+};
 
-module.exports = new PostController();
+module.exports = postController;

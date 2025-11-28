@@ -1,0 +1,83 @@
+<div class="card shadow-sm border-0">
+    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+        <h5 class="mb-0 fw-bold text-primary"><i class="fas fa-users me-2"></i>Danh sách bệnh nhân</h5>
+        <div class="input-group w-auto">
+            <input type="text" class="form-control form-control-sm" placeholder="Tìm tên bệnh nhân...">
+            <button class="btn btn-outline-primary btn-sm"><i class="fas fa-search"></i></button>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="bg-light">
+                    <tr>
+                        <th class="ps-4">Họ và Tên</th>
+                        <th>Liên hệ</th>
+                        <th>Giới tính</th>
+                        <th>Địa chỉ</th>
+                        <th class="text-end pe-4">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% if (patients && patients.length > 0) { %>
+                        <% patients.forEach(p => { %>
+                            <tr>
+                                <td class="ps-4">
+                                    <div class="d-flex align-items-center">
+                                        <img src="<%= (p.user && p.user.avatar) ? p.user.avatar : 'https://placehold.co/100x100/e9ecef/6c757d?text=' + (p.user ? p.user.full_name.charAt(0) : 'P') %>"
+                                             class="rounded-circle me-3" width="40" height="40">
+                                        <div>
+                                            <div class="fw-bold"><%= p.user ? p.user.full_name : 'Không tên' %></div>
+                                            <div class="small text-muted">Mã BN: #<%= p.id %></div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div><i class="fas fa-phone-alt me-1 text-muted" style="font-size: 0.8rem;"></i> <%= p.user ? p.user.phone : '' %></div>
+                                    <div class="small text-muted"><%= p.user ? p.user.email : '' %></div>
+                                </td>
+                                <td>
+                                    <% if (p.gender === 'male') { %>
+                                        <span class="badge bg-info bg-opacity-10 text-info">Nam</span>
+                                    <% } else if (p.gender === 'female') { %>
+                                        <span class="badge bg-danger bg-opacity-10 text-danger">Nữ</span>
+                                    <% } else { %>
+                                        <span class="text-muted">-</span>
+                                    <% } %>
+                                </td>
+                                <td><%= p.address || 'Chưa cập nhật' %></td>
+                                <td class="text-end pe-4">
+                                    <div class="dropdown">
+                                        <button class="btn btn-light btn-sm rounded-circle" type="button" data-bs-toggle="dropdown">
+                                            <i class="fas fa-ellipsis-v"></i>
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end border-0 shadow">
+                                            <li><a class="dropdown-item" href="#"><i class="fas fa-file-medical-alt me-2"></i>Hồ sơ bệnh án</a></li>
+                                            <li><a class="dropdown-item" href="#"><i class="fas fa-history me-2"></i>Lịch sử khám</a></li>
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li><a class="dropdown-item text-primary" href="/chat"><i class="fas fa-comment-dots me-2"></i>Nhắn tin</a></li>
+                                        </ul>
+                                    </div>
+                                </td>
+                            </tr>
+                        <% }) %>
+                    <% } else { %>
+                        <tr>
+                            <td colspan="5" class="text-center py-5 text-muted">
+                                <i class="fas fa-user-injured fa-3x mb-3 opacity-50"></i>
+                                <p>Chưa có bệnh nhân nào.</p>
+                            </td>
+                        </tr>
+                    <% } %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Fix lỗi dropdown bị che trong bảng */
+    .table-responsive {
+        overflow: visible !important; /* Cho phép menu nổi ra ngoài */
+    }
+</style>

@@ -1,0 +1,104 @@
+<div class="card shadow-sm border-0">
+    <div class="card-header bg-white py-3">
+        <h5 class="mb-0 fw-bold text-primary"><i class="fas fa-calendar-check me-2"></i>Danh sách lịch hẹn</h5>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="bg-light">
+                    <tr>
+                        <th class="ps-4">Bệnh nhân</th>
+                        <th>Thời gian</th>
+                        <th>Lý do khám</th>
+                        <th>Trạng thái</th>
+                        <th class="text-end pe-4">Hành động</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <% if (appointments && appointments.length > 0) { %>
+                        <% appointments.forEach(app => { %>
+                            <tr>
+                                <td class="ps-4">
+                                    <div class="d-flex align-items-center">
+                                        <div class="bg-light rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                                            <i class="fas fa-user text-secondary"></i>
+                                        </div>
+                                        <div>
+                                            <div class="fw-bold"><%= app.Patient && app.Patient.user ? app.Patient.user.full_name : 'Ẩn danh' %></div>
+                                            <div class="small text-muted"><%= app.Patient && app.Patient.user ? app.Patient.user.phone : '' %></div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="fw-bold"><%= new Date(app.appointment_date).toLocaleDateString('vi-VN') %></div>
+                                    <div class="small text-primary"><%= app.time_slot %></div>
+                                </td>
+                                <td><%= app.reason %></td>
+                                <td>
+                                    <% if(app.status == 'pending') { %>
+                                        <span class="badge bg-warning text-dark">Chờ xác nhận</span>
+                                    <% } else if(app.status == 'confirmed') { %>
+                                        <span class="badge bg-success">Đã xác nhận</span>
+                                    <% } else if(app.status == 'completed') { %>
+                                        <span class="badge bg-info">Đã khám xong</span>
+                                    <% } else { %>
+                                        <span class="badge bg-secondary">Đã hủy</span>
+                                    <% } %>
+                                </td>
+                                <td class="text-end pe-4">
+                                    <% if(app.status == 'pending') { %>
+                                        <button class="btn btn-sm btn-success me-1" onclick="updateStatus(<%= app.id %>, 'confirmed')" title="Chấp nhận">
+                                            <i class="fas fa-check"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-danger" onclick="updateStatus(<%= app.id %>, 'cancelled')" title="Từ chối">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    <% } else if(app.status == 'confirmed') { %>
+                                        <a href="/medical-records/create/<%= app.id %>" class="btn btn-sm btn-primary">
+                                            <i class="fas fa-stethoscope me-1"></i> Khám bệnh
+                                        </a>
+                                    <% } else if(app.status == 'completed') { %>
+                                        <span class="text-success small me-2"><i class="fas fa-check-circle"></i> Hoàn tất</span>
+                                        <a href="/medical-records/view/<%= app.id %>" class="btn btn-sm btn-outline-secondary">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    <% } else { %>
+                                        <button class="btn btn-sm btn-light" disabled>Đã hủy</button>
+                                    <% } %>
+                                </td>
+                            </tr>
+                        <% }) %>
+                    <% } else { %>
+                        <tr>
+                            <td colspan="5" class="text-center py-5 text-muted">Chưa có lịch hẹn nào.</td>
+                        </tr>
+                    <% } %>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    async function updateStatus(id, status) {
+        if(!confirm(status == 'confirmed' ? 'Xác nhận lịch hẹn này?' : 'Bạn chắc chắn muốn hủy lịch này?')) return;
+
+        try {
+            const res = await fetch(`/doctor/appointments/${id}/status`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status })
+            });
+            const data = await res.json();
+
+            if(data.success) {
+                alert('Thành công!');
+                location.reload();
+            } else {
+                alert('Lỗi: ' + data.message);
+            }
+        } catch (error) {
+            alert('Lỗi kết nối');
+        }
+    }
+</script>

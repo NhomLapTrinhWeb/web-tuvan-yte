@@ -1,185 +1,197 @@
-const { Doctor, User, Specialty, Department, Review } = require('../models');
+const { Doctor, User, Specialty, Department, Appointment, Patient } = require('../models');
 const { Op } = require('sequelize');
 
-class DoctorController {
-  // GET /doctors - Danh sách bác sĩ với filter và pagination
-  async index(req, res) {
+const doctorController = {
+  // 1. Hiển thị danh sách bác sĩ (Public)
+  index: async (req, res) => {
     try {
-      const page = parseInt(req.query.page) || 1;
-      const limit = 12;
-      const offset = (page - 1) * limit;
-      
-      // Build where clause
-      const where = {
-        is_active: true,
-        is_approved: true
-      };
-      
-      // Filter by specialty
-      if (req.query.specialty) {
-        where.specialty_id = req.query.specialty;
+      const { specialty, search } = req.query;
+      const whereClause = { is_approved: true };
+      const userWhereClause = { is_active: true };
+
+      if (specialty) {
+        const specialtyData = await Specialty.findOne({ where: { slug: specialty } });
+        if (specialtyData) whereClause.specialty_id = specialtyData.id;
       }
-      
-      // Filter by department
-      if (req.query.department) {
-        where.department_id = req.query.department;
+
+      if (search) {
+          userWhereClause.full_name = { [Op.like]: `%${search}%` };
       }
-      
-      // Search by name
-      let userWhere = {};
-      if (req.query.search) {
-        userWhere = {
-          full_name: {
-            [Op.like]: `%${req.query.search}%`
-          }
-        };
-      }
-      
-      // Get doctors with pagination
-      const { count, rows: doctors } = await Doctor.findAndCountAll({
-        where,
+
+      const doctors = await Doctor.findAll({
+        where: whereClause,
         include: [
           {
             model: User,
             as: 'user',
-            attributes: ['id', 'full_name', 'email', 'avatar'],
-            where: Object.keys(userWhere).length > 0 ? userWhere : undefined
+            attributes: ['id', 'full_name', 'avatar', 'email'],
+            where: userWhereClause
           },
-          {
-            model: Specialty,
-            as: 'specialty',
-            attributes: ['id', 'name', 'slug', 'icon']
-          },
-          {
-            model: Department,
-            as: 'department',
-            attributes: ['id', 'name', 'slug']
-          }
+          { model: Specialty, as: 'specialty', attributes: ['name', 'slug'] },
+          { model: Department, as: 'department', attributes: ['name'] }
         ],
-        limit,
-        offset,
-        order: [['rating', 'DESC']],
-        distinct: true
-      });
-      
-      // Get all specialties for filter dropdown
-      const specialties = await Specialty.findAll({
-        where: { is_active: true },
-        order: [['name', 'ASC']]
-      });
-      
-      // Get all departments for filter dropdown
-      const departments = await Department.findAll({
-        where: { is_active: true },
-        order: [['name', 'ASC']]
-      });
-      
-      const totalPages = Math.ceil(count / limit);
-      
-      res.render('doctors/index', {
-        pageTitle: 'Đội Ngũ Bác Sĩ',
-        doctors,
-        specialties,
-        departments,
-        currentPage: page,
-        totalPages,
-        totalDoctors: count,
-        currentPath: req.path,
-        filters: {
-          specialty: req.query.specialty || '',
-          department: req.query.department || '',
-          search: req.query.search || ''
-        }
-      });
-    } catch (error) {
-      console.error('Error in DoctorController.index:', error);
-      res.status(500).send('Không thể tải danh sách bác sĩ');
-    }
-  }
-  
-  // GET /doctors/:id - Chi tiết bác sĩ
-  async show(req, res) {
-    try {
-      const doctorId = req.params.id;
-      
-      // Get doctor details
-      const doctor = await Doctor.findOne({
-        where: { user_id: doctorId, is_active: true, is_approved: true },
-        include: [
-          {
-            model: User,
-            as: 'user',
-            attributes: ['id', 'full_name', 'email', 'avatar', 'phone']
-          },
-          {
-            model: Specialty,
-            as: 'specialty',
-            attributes: ['id', 'name', 'slug', 'description', 'icon']
-          },
-          {
-            model: Department,
-            as: 'department',
-            attributes: ['id', 'name', 'slug', 'location']
-          }
-        ]
-      });
-      
-      if (!doctor) {
-        return res.status(404).send('Không tìm thấy bác sĩ');
-      }
-      
-      // Get reviews with pagination
-      const reviewPage = parseInt(req.query.review_page) || 1;
-      const reviewLimit = 5;
-      const reviewOffset = (reviewPage - 1) * reviewLimit;
-      
-      const { count: reviewCount, rows: reviews } = await Review.findAndCountAll({
-        where: { doctor_id: doctorId, is_approved: true },
-        include: [
-          {
-            model: User,
-            as: 'patient',
-            attributes: ['id', 'full_name', 'avatar']
-          }
-        ],
-        limit: reviewLimit,
-        offset: reviewOffset,
         order: [['created_at', 'DESC']]
       });
-      
-      const totalReviewPages = Math.ceil(reviewCount / reviewLimit);
-      
-      // Calculate rating distribution
-      const ratingStats = await Review.findAll({
-        where: { doctor_id: doctorId, is_approved: true },
-        attributes: [
-          'rating',
-          [Doctor.sequelize.fn('COUNT', Doctor.sequelize.col('id')), 'count']
-        ],
-        group: ['rating'],
-        raw: true
+
+      const specialties = await Specialty.findAll();
+
+      res.render('doctors/index', {
+        pageTitle: 'Đội ngũ Bác sĩ',
+        doctors,
+        specialties,
+        currentSpecialty: specialty
       });
-      
-      const ratingDistribution = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
-      ratingStats.forEach(stat => {
-        ratingDistribution[stat.rating] = parseInt(stat.count);
+
+    } catch (error) {
+      console.error('Get doctors error:', error);
+      res.status(500).send('Lỗi server: ' + error.message);
+    }
+  },
+
+  // 2. Hiển thị chi tiết (Public)
+  show: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const doctor = await Doctor.findOne({
+        where: { id, is_approved: true },
+        include: [
+          { model: User, as: 'user', attributes: ['full_name', 'avatar', 'email', 'phone'] },
+          { model: Specialty, as: 'specialty' },
+          { model: Department, as: 'department' }
+        ]
       });
-      
+
+      if (!doctor) {
+        return res.status(404).render('errors/404', { pageTitle: 'Không tìm thấy bác sĩ' });
+      }
+
       res.render('doctors/show', {
-        pageTitle: doctor.user.full_name,
-        doctor,
-        reviews,
-        reviewCount,
-        currentReviewPage: reviewPage,
-        totalReviewPages,
-        ratingDistribution,
-        currentPath: req.path
+        pageTitle: `BS. ${doctor.user.full_name}`,
+        doctor
       });
     } catch (error) {
-      console.error('Error in DoctorController.show:', error);
-      res.status(500).send('Không thể tải thông tin bác sĩ');
+      console.error('Get doctor detail error:', error);
+      res.status(500).send('Lỗi server');
     }
-  }
-}
+  },
 
-module.exports = new DoctorController();
+  // 3. Dashboard Bác sĩ (Private)
+  getDashboard: async (req, res) => {
+    try {
+      const user = req.user || req.session.user;
+      const doctor = await Doctor.findOne({ where: { user_id: user.id } });
+
+      if (!doctor) return res.send("Bạn chưa có hồ sơ bác sĩ.");
+
+      const appointmentCount = await Appointment.count({ where: { doctor_id: doctor.id } });
+      const pendingCount = await Appointment.count({ where: { doctor_id: doctor.id, status: 'pending' } });
+
+      res.render('doctor/dashboard', {
+        pageTitle: 'Bàn làm việc Bác sĩ',
+        user,
+        stats: { total: appointmentCount, pending: pendingCount }
+      });
+    } catch (error) {
+      console.error(error);
+      res.status(500).send('Lỗi server');
+    }
+  }, // <--- DẤU PHẨY NÀY LÀ CÁI BẠN ĐANG THIẾU
+
+  // 4. Xem danh sách lịch hẹn của Bác sĩ
+  getAppointments: async (req, res) => {
+    try {
+      const user = req.user || req.session.user;
+
+      // Tìm Doctor ID dựa trên User ID
+      const doctor = await Doctor.findOne({ where: { user_id: user.id } });
+      if (!doctor) return res.send("Lỗi: Không tìm thấy hồ sơ bác sĩ.");
+
+      // Lấy danh sách lịch hẹn
+      const appointments = await Appointment.findAll({
+        where: { doctor_id: doctor.id },
+        include: [
+          {
+            model: Patient,
+            include: [{ model: User, as: 'user', attributes: ['full_name', 'phone', 'email', 'avatar'] }]
+          }
+        ],
+        order: [['appointment_date', 'DESC'], ['time_slot', 'ASC']]
+      });
+
+      res.render('doctor/appointments/index', {
+        pageTitle: 'Quản lý Lịch khám',
+        appointments
+      });
+    } catch (error) {
+      console.error(error);
+      res.status(500).send('Lỗi server: ' + error.message);
+    }
+  },
+
+  // 5. Xử lý Duyệt/Hủy lịch hẹn (API)
+  updateAppointmentStatus: async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { status } = req.body;
+
+        await Appointment.update(
+            { status: status },
+            { where: { id: id } }
+        );
+
+        res.json({ success: true, message: 'Cập nhật thành công!' });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false, message: 'Lỗi server' });
+    }
+  },
+
+  // ... (Các hàm cũ giữ nguyên)
+
+    // 6. Xem danh sách Bệnh nhân của tôi
+    getPatients: async (req, res) => {
+      try {
+        const user = req.user || req.session.user;
+
+        // 1. Tìm thông tin Bác sĩ
+        const doctor = await Doctor.findOne({ where: { user_id: user.id } });
+        if (!doctor) return res.send("Lỗi: Không tìm thấy hồ sơ bác sĩ.");
+
+        // 2. Lấy tất cả lịch hẹn của bác sĩ này (kèm thông tin bệnh nhân)
+        const appointments = await Appointment.findAll({
+          where: { doctor_id: doctor.id },
+          include: [
+            {
+              model: Patient,
+              include: [{ model: User, as: 'user', attributes: ['full_name', 'email', 'phone', 'avatar'] }]
+            }
+          ],
+          order: [['appointment_date', 'DESC']]
+        });
+
+        // 3. Lọc ra danh sách bệnh nhân DUY NHẤT (Loại bỏ trùng lặp nếu 1 người khám nhiều lần)
+        const uniquePatients = [];
+        const map = new Map();
+
+        for (const app of appointments) {
+            // Kiểm tra xem bệnh nhân có tồn tại không (đề phòng data rác)
+            if (app.Patient && !map.has(app.Patient.id)) {
+                map.set(app.Patient.id, true); // Đánh dấu đã lấy
+                uniquePatients.push(app.Patient);
+            }
+        }
+
+        res.render('doctor/patients/index', {
+          pageTitle: 'Danh sách Bệnh nhân',
+          patients: uniquePatients
+        });
+
+      } catch (error) {
+        console.error(error);
+        res.status(500).send('Lỗi server: ' + error.message);
+      }
+    }
+
+};
+
+module.exports = doctorController;

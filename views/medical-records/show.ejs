@@ -1,0 +1,55 @@
+<div class="container py-5">
+    <div class="card shadow-lg border-0 mx-auto" style="max-width: 800px;">
+        <div class="card-header bg-white text-center py-4 border-bottom">
+            <h3 class="fw-bold text-primary mb-0">PHIẾU KẾT QUẢ KHÁM BỆNH</h3>
+            <small class="text-muted">Mã hồ sơ: #<%= record.id %></small>
+        </div>
+        <div class="card-body p-5">
+            <div class="row mb-4">
+                <div class="col-6">
+                    <h5 class="fw-bold">Thông tin bệnh nhân</h5>
+                    <p class="mb-1">Họ tên: <strong><%= record.appointment && record.appointment.Patient && record.appointment.Patient.user ? record.appointment.Patient.user.full_name : 'N/A' %></strong></p>
+                    <p>Ngày khám: <%= record.appointment && record.appointment.appointment_date ? new Date(record.appointment.appointment_date).toLocaleDateString('vi-VN') : 'N/A' %></p>
+                </div>
+                <div class="col-6 text-end">
+                    <h5 class="fw-bold">Bác sĩ phụ trách</h5>
+                    <p class="mb-0">
+                        BS. <%= record.appointment && record.appointment.Doctor && record.appointment.Doctor.user ? record.appointment.Doctor.user.full_name : 'Hospital Portal' %>
+                    </p>
+                </div>
+            </div>
+
+            <hr>
+
+            <div class="mb-4 mt-4">
+                <h6 class="text-uppercase text-muted small fw-bold">Triệu chứng</h6>
+                <p class="lead"><%= record.symptoms %></p>
+            </div>
+
+            <div class="mb-4">
+                <h6 class="text-uppercase text-muted small fw-bold">Chẩn đoán</h6>
+                <div class="alert alert-primary bg-opacity-10 border-0 fw-bold fs-5 text-primary">
+                    <%= record.diagnosis %>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <h6 class="text-uppercase text-muted small fw-bold">Đơn thuốc & Chỉ định</h6>
+                <div class="bg-light p-4 rounded border" style="white-space: pre-line;">
+                    <%= record.prescription %>
+                </div>
+            </div>
+
+            <div class="mb-4">
+                <h6 class="text-uppercase text-muted small fw-bold">Lời dặn</h6>
+                <p class="fst-italic"><%= record.notes %></p>
+            </div>
+        </div>
+        <div class="card-footer bg-light text-center py-3">
+            <button onclick="window.print()" class="btn btn-outline-secondary btn-sm">
+                <i class="fas fa-print me-2"></i>In phiếu kết quả
+            </button>
+            <a href="/" class="btn btn-link btn-sm ms-2">Về trang chủ</a>
+        </div>
+    </div>
+</div>

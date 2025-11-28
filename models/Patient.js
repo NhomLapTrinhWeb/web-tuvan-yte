@@ -3,9 +3,19 @@ const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 
 const Patient = sequelize.define('Patient', {
-  user_id: {
+  // 👇 THÊM CỘT ID NÀY
+  id: {
     type: DataTypes.INTEGER,
     primaryKey: true,
+    autoIncrement: true,
+    allowNull: false
+  },
+  // -------------------
+
+  user_id: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    unique: true, // Đảm bảo 1 user chỉ có 1 hồ sơ bệnh nhân
     references: {
       model: 'users',
       key: 'id'

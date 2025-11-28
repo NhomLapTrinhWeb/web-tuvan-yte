@@ -8,8 +8,10 @@ async function resetDatabase() {
   try {
     console.log('🔄 Đang kết nối MySQL server...');
     
+    // KẾT NỐI: Đã thêm dòng PORT ở dưới để nhận diện cổng 3307
     connection = await mysql.createConnection({
       host: process.env.DB_HOST || 'localhost',
+      port: process.env.DB_PORT || 3306, // <--- ĐÃ SỬA: Thêm dòng này
       user: process.env.DB_USER || 'root',
       password: process.env.DB_PASSWORD || ''
     });
@@ -17,7 +19,7 @@ async function resetDatabase() {
     console.log('✅ Kết nối MySQL thành công!');
 
     const dbName = process.env.DB_NAME || 'hospital_booking';
-    
+
     // Drop database nếu tồn tại
     console.log(`\n🗑️  Đang xóa database '${dbName}' (nếu tồn tại)...`);
     await connection.query(`DROP DATABASE IF EXISTS \`${dbName}\``);

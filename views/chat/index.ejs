@@ -1,0 +1,134 @@
+<script src="/socket.io/socket.io.js"></script>
+
+<script>
+    const socket = io();
+    const currentUserId = <%= user.id %>;
+    const chatBox = document.getElementById('chatBox');
+    const notiSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2354/2354-preview.mp3');
+
+    // 1. Kết nối
+    socket.emit('join', currentUserId);
+
+    // 2. TỰ ĐỘNG TẢI TIN NHẮN CŨ (NEW)
+    document.addEventListener('DOMContentLoaded', () => {
+        loadChatHistory();
+    });
+
+    async function loadChatHistory() {
+        // Lấy ID cuộc hội thoại đang mở (Hiện tại đang fix cứng là 1)
+        const appointmentId = document.getElementById('appointmentId').value;
+
+        try {
+            // Gọi API lấy tin nhắn từ Database
+            const res = await fetch(`/api/chat/history/${appointmentId}`);
+            const result = await res.json();
+
+            chatBox.innerHTML = ''; // Xóa sạch màn hình trước khi vẽ
+
+            if(result.success && result.data.length > 0) {
+                // Thêm dòng thông báo ngày tháng
+                chatBox.innerHTML += '<div class="text-center text-muted small my-3">-- Lịch sử trò chuyện --</div>';
+
+                // Vòng lặp vẽ lại từng tin nhắn cũ
+                result.data.forEach(msg => {
+                    const isSender = msg.sender_id === currentUserId;
+
+                    // Xử lý Avatar & Tên (đề phòng user bị xóa)
+                    let senderName = msg.sender ? msg.sender.full_name : 'Người dùng';
+                    let senderAvatar = (msg.sender && msg.sender.avatar)
+                        ? msg.sender.avatar
+                        : 'https://placehold.co/100x100/e9ecef/6c757d?text=' + senderName.charAt(0);
+
+                    // Gọi hàm vẽ tin nhắn
+                    appendMessage(msg.message, isSender, msg.created_at, senderAvatar, senderName);
+                });
+
+                // Cuộn xuống dưới cùng để xem tin mới nhất
+                scrollToBottom();
+            } else {
+                chatBox.innerHTML = '<div class="text-center text-muted small my-5">Chưa có tin nhắn nào. Hãy bắt đầu cuộc trò chuyện!</div>';
+            }
+        } catch (err) {
+            console.error('Lỗi tải history:', err);
+            chatBox.innerHTML = '<div class="text-center text-danger small my-3">Không thể tải tin nhắn cũ.</div>';
+        }
+    }
+
+    // 3. Xử lý Gửi tin nhắn
+    document.getElementById('chatForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const input = document.getElementById('messageInput');
+        const message = input.value.trim();
+        const receiverId = document.getElementById('receiverId').value;
+        const appointmentId = document.getElementById('appointmentId').value;
+
+        if (message) {
+            socket.emit('send_message', {
+                appointmentId: appointmentId,
+                receiverId: receiverId,
+                message: message,
+                messageType: 'text'
+            });
+            input.value = '';
+        }
+    });
+
+    // 4. Nhận tin nhắn mới (Real-time)
+    socket.on('new_message', (data) => {
+        const isMyMessage = data.senderId === currentUserId;
+        const senderName = data.sender.name;
+        const senderAvatar = data.sender.avatar || 'https://placehold.co/100x100/e9ecef/6c757d?text=' + senderName.charAt(0);
+
+        appendMessage(data.message, isMyMessage, data.timestamp, senderAvatar, senderName);
+
+        // Chỉ cuộn xuống nếu đang ở gần cuối (tránh làm phiền khi user đang đọc tin cũ)
+        scrollToBottom();
+
+        if (!isMyMessage) notiSound.play().catch(() => {});
+    });
+
+    // Hàm vẽ giao diện tin nhắn
+    function appendMessage(text, isSender, time, avatarUrl, name) {
+        const timeStr = new Date(time || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+        const avatarHtml = !isSender
+            ? `<img src="${avatarUrl}" class="rounded-circle me-2 align-self-end shadow-sm" width="35" height="35" title="${name}" style="object-fit: cover;">`
+            : '';
+
+        const html = `
+            <div class="d-flex mb-3 ${isSender ? 'justify-content-end' : ''}">
+                ${avatarHtml}
+                <div style="max-width: 75%;">
+                    ${!isSender ? `<small class="text-muted ms-1 d-block mb-1" style="font-size: 11px;">${name}</small>` : ''}
+                    <div class="message-bubble ${isSender ? 'message-sent shadow-sm' : 'message-received shadow-sm'}">
+                        <p class="mb-1">${text}</p>
+                        <small class="${isSender ? 'text-white-50' : 'text-muted'} d-block text-end" style="font-size: 0.65rem; margin-top: 4px;">${timeStr}</small>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Xóa dòng "Chưa có tin nhắn" nếu có
+        if(chatBox.innerHTML.includes('Chưa có tin nhắn')) chatBox.innerHTML = '';
+
+        chatBox.insertAdjacentHTML('beforeend', html);
+    }
+
+    function scrollToBottom() {
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    socket.on('error', (err) => {
+        // alert('⚠️ Lỗi: ' + err.message); // Tạm tắt alert để đỡ phiền nếu lỗi nhỏ
+        console.error('Socket Error:', err);
+    });
+
+    // Hàm chọn hội thoại (Dùng sau này khi làm list chat động)
+    function selectConversation(appointId, docId, name, avatar) {
+        document.getElementById('appointmentId').value = appointId;
+        document.getElementById('receiverId').value = docId;
+        document.getElementById('headerName').innerText = name;
+        document.getElementById('headerAvatar').src = avatar;
+        loadChatHistory(); // Tải lại tin nhắn mới
+    }
+</script>

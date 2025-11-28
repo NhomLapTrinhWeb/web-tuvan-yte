@@ -7,16 +7,18 @@ const express = require('express');
 const router = express.Router();
 
 // Import Controllers
-const HomeController = require('../controllers/HomeController');
-const DoctorController = require('../controllers/DoctorController');
-const PostController = require('../controllers/PostController');
-const SpecialtyController = require('../controllers/SpecialtyController');
-const AppointmentController = require('../controllers/AppointmentController');
+// 👇 ĐÃ SỬA: Đổi tên biến thành chữ thường để khớp với lệnh gọi bên dưới
+const homeController = require('../controllers/homeController');
+const doctorController = require('../controllers/doctorController');
+const postController = require('../controllers/postController');
+const specialtyController = require('../controllers/specialtyController');
+const chatController = require('../controllers/chatController');
+// const appointmentController = require('../controllers/appointmentController'); // Tạm chưa dùng ở đây
 
 // ===== HOME ROUTES =====
-router.get('/', HomeController.index);
-router.get('/about', HomeController.about);
-router.get('/contact', HomeController.contact);
+router.get('/', homeController.index);
+router.get('/about', homeController.about);
+router.get('/contact', homeController.contact);
 
 // ===== AUTH PAGES =====
 router.get('/login', (req, res) => {
@@ -27,57 +29,56 @@ router.get('/register', (req, res) => {
 });
 
 // ===== DOCTOR ROUTES =====
-router.get('/doctors', DoctorController.index);
-router.get('/doctors/:id', DoctorController.show);
+router.get('/doctors', doctorController.index);
+router.get('/doctors/:id', doctorController.show);
 
 // ===== POST/NEWS ROUTES =====
-router.get('/posts', PostController.index);
-router.get('/posts/:slug', PostController.show);
+router.get('/posts', postController.index);
+router.get('/posts/:slug', postController.show);
 
 // ===== SPECIALTY ROUTES =====
-router.get('/specialties', SpecialtyController.index);
-router.get('/specialties/:slug', SpecialtyController.show);
-
-// ===== APPOINTMENT ROUTES (Protected - require auth) =====
-// Note: These routes will need auth middleware when authentication is implemented
-// router.get('/appointments/book/:doctorId', AppointmentController.bookingForm);
-// router.post('/appointments/book', AppointmentController.createBooking);
-// router.get('/appointments/my-appointments', AppointmentController.myAppointments);
-// router.post('/appointments/:id/cancel', AppointmentController.cancelAppointment);
+router.get('/specialties', specialtyController.index);
+router.get('/specialties/:slug', specialtyController.show);
 
 // ===== ADDITIONAL STATIC PAGES =====
 router.get('/departments', (req, res) => {
-  res.render('departments', { 
-    pageTitle: 'Các Khoa', 
-    currentPath: req.path 
+  res.render('departments', {
+    pageTitle: 'Các Khoa',
+    currentPath: req.path
   });
 });
 
+// ===== CHAT ROUTE =====
+router.get('/chat', chatController.index);
+// 👇 THÊM DÒNG NÀY:
+router.get('/api/chat/history/:appointmentId', chatController.getHistory);
+
+
 router.get('/emergency', (req, res) => {
-  res.render('emergency', { 
-    pageTitle: 'Cấp Cứu 24/7', 
-    currentPath: req.path 
+  res.render('emergency', {
+    pageTitle: 'Cấp Cứu 24/7',
+    currentPath: req.path
   });
 });
 
 router.get('/privacy', (req, res) => {
-  res.render('privacy', { 
-    pageTitle: 'Chính Sách Bảo Mật', 
-    currentPath: req.path 
+  res.render('privacy', {
+    pageTitle: 'Chính Sách Bảo Mật',
+    currentPath: req.path
   });
 });
 
 router.get('/terms', (req, res) => {
-  res.render('terms', { 
-    pageTitle: 'Điều Khoản Sử Dụng', 
-    currentPath: req.path 
+  res.render('terms', {
+    pageTitle: 'Điều Khoản Sử Dụng',
+    currentPath: req.path
   });
 });
 
 router.get('/health-check', (req, res) => {
-  res.render('health-check', { 
-    pageTitle: 'Gói Khám Sức Khỏe', 
-    currentPath: req.path 
+  res.render('health-check', {
+    pageTitle: 'Gói Khám Sức Khỏe',
+    currentPath: req.path
   });
 });
 

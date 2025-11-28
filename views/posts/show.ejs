@@ -174,7 +174,7 @@
                           </a>
                         </h5>
                         <p class="card-text text-muted small">
-                          <%= relatedPost.excerpt.substring(0, 100) %>...
+                          <%= (relatedPost.summary || '').substring(0, 100) %>...
                         </p>
                         <a href="/posts/<%= relatedPost.slug %>" class="btn btn-sm btn-outline-primary">
                           Đọc thêm <i class="fas fa-arrow-right ms-1"></i>

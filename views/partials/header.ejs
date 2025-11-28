@@ -1,77 +1,46 @@
-<% if (currentPath === '/') { %>
-<!-- Main Navigation -->
-<nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm sticky-top">
-  <div class="container">
-    <a class="navbar-brand d-flex align-items-center" href="/">
-      <i class="fas fa-hospital-alt fa-2x text-primary me-2"></i>
-      <div>
-        <div class="fw-bold fs-5 text-primary mb-0">Hospital Portal</div>
-        <small class="text-muted" style="font-size: 0.7rem;">Tư vấn & Đặt lịch Y tế</small>
-      </div>
-    </a>
-    
-    <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar">
-      <span class="navbar-toggler-icon"></span>
-    </button>
-    
-    <div class="collapse navbar-collapse" id="mainNavbar">
-      <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
-        <li class="nav-item">
-          <a class="nav-link fw-500" href="/"><i class="fas fa-home me-1"></i>Trang chủ</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link fw-500" href="/about"><i class="fas fa-info-circle me-1"></i>Giới thiệu</a>
-        </li>
-        <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle fw-500" href="#" data-bs-toggle="dropdown">
-            <i class="fas fa-stethoscope me-1"></i>Chuyên khoa
-          </a>
-          <ul class="dropdown-menu border-0 shadow">
-            <li><a class="dropdown-item" href="/specialties">Tất cả chuyên khoa</a></li>
-            <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item" href="/specialties/noi-tong-quat">Nội tổng quát</a></li>
-            <li><a class="dropdown-item" href="/specialties/tim-mach">Tim mạch</a></li>
-            <li><a class="dropdown-item" href="/specialties/nhi-khoa">Nhi khoa</a></li>
-          </ul>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link fw-500" href="/doctors"><i class="fas fa-user-md me-1"></i>Bác sĩ</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link fw-500" href="/posts"><i class="fas fa-newspaper me-1"></i>Tin tức</a>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link fw-500" href="/contact"><i class="fas fa-phone me-1"></i>Liên hệ</a>
-        </li>
-      </ul>
-      
-      <% if (locals.user) { %>
-        <div class="dropdown">
-          <button class="btn btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
-            <i class="fas fa-user-circle me-1"></i><%= user.full_name %>
-          </button>
-          <ul class="dropdown-menu dropdown-menu-end border-0 shadow">
-            <li><a class="dropdown-item" href="/profile"><i class="fas fa-user me-2"></i>Hồ sơ</a></li>
-            <li><a class="dropdown-item" href="/appointments"><i class="fas fa-calendar me-2"></i>Lịch hẹn</a></li>
-            <% if (user.role === 'admin') { %>
-              <li><hr class="dropdown-divider"></li>
-              <li><a class="dropdown-item" href="/admin"><i class="fas fa-cog me-2"></i>Quản trị</a></li>
-            <% } %>
-            <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item text-danger" href="#" id="logoutBtn"><i class="fas fa-sign-out-alt me-2"></i>Đăng xuất</a></li>
-          </ul>
+<nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm fixed-top">
+    <div class="container">
+        <a class="navbar-brand fw-bold text-primary" href="/">
+            <i class="fas fa-hospital-alt me-2"></i>Hospital Portal
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        
+        <div class="collapse navbar-collapse" id="navbarMain">
+            <ul class="navbar-nav ms-auto align-items-center">
+                <li class="nav-item">
+                    <a class="nav-link <%= (typeof currentPath != 'undefined' && currentPath == '/') ? 'active' : '' %>" href="/">Trang chủ</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link <%= (typeof currentPath != 'undefined' && currentPath == '/doctors') ? 'active' : '' %>" href="/doctors">Đội ngũ bác sĩ</a>
+                </li>
+                
+                <% if (typeof user !== 'undefined' && user) { %>
+                    <li class="nav-item dropdown ms-3">
+                        <a class="nav-link dropdown-toggle btn btn-outline-primary px-3 rounded-pill border-0" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user-circle me-1"></i> <%= user.full_name %>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end shadow">
+                            <li><a class="dropdown-item" href="/appointments"><i class="fas fa-history me-2"></i>Lịch sử khám</a></li>
+                            <% if (user.role === 'admin') { %>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="/admin/dashboard"><i class="fas fa-user-shield me-2"></i>Trang quản trị</a></li>
+                            <% } %>
+                            <% if (user.role === 'doctor') { %>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="/doctor/dashboard"><i class="fas fa-stethoscope me-2"></i>Bàn làm việc Bác sĩ</a></li>
+                            <% } %>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item text-danger" href="#" id="logoutBtn"><i class="fas fa-sign-out-alt me-2"></i>Đăng xuất</a></li>
+                        </ul>
+                    </li>
+                <% } else { %>
+                    <li class="nav-item ms-3">
+                        <a class="btn btn-primary px-4 rounded-pill" href="/login">Đăng nhập</a>
+                    </li>
+                <% } %>
+            </ul>
         </div>
-      <% } else { %>
-        <div class="d-flex gap-2">
-          <a href="/login" class="btn btn-outline-primary">
-            <i class="fas fa-sign-in-alt me-1"></i>Đăng nhập
-          </a>
-          <a href="/register" class="btn btn-primary">
-            <i class="fas fa-user-plus me-1"></i>Đăng ký
-          </a>
-        </div>
-      <% } %>
     </div>
-  </div>
 </nav>
-<% } %>

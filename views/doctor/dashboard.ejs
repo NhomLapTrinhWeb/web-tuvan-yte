@@ -1,0 +1,58 @@
+<div class="row g-4 mb-4">
+    <div class="col-md-6 col-xl-4">
+        <div class="card bg-warning text-dark h-100 shadow-sm border-0">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-uppercase mb-1 opacity-75 fw-bold">Chờ xác nhận</h6>
+                        <h2 class="display-4 fw-bold mb-0"><%= stats.pending || 0 %></h2>
+                    </div>
+                    <i class="fas fa-clock fa-3x opacity-50"></i>
+                </div>
+            </div>
+            <div class="card-footer bg-warning bg-opacity-25 border-0 d-flex align-items-center justify-content-between">
+                <a href="/doctor/appointments" class="text-dark text-decoration-none fw-bold stretched-link">Xem chi tiết</a>
+                <i class="fas fa-arrow-right"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 col-xl-4">
+        <div class="card bg-primary text-white h-100 shadow-sm border-0">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-uppercase mb-1 opacity-75 fw-bold">Tổng lịch hẹn</h6>
+                        <h2 class="display-4 fw-bold mb-0"><%= stats.total || 0 %></h2>
+                    </div>
+                    <i class="fas fa-calendar-check fa-3x opacity-50"></i>
+                </div>
+            </div>
+            <div class="card-footer bg-primary bg-opacity-25 border-0 d-flex align-items-center justify-content-between">
+                <a href="/doctor/appointments" class="text-white text-decoration-none fw-bold stretched-link">Quản lý lịch</a>
+                <i class="fas fa-arrow-right"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow-sm border-0">
+    <div class="card-body p-5 text-center">
+        <div class="mb-3">
+            <div class="bg-info bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center" style="width: 80px; height: 80px;">
+                <i class="fas fa-user-md fa-3x text-info"></i>
+            </div>
+        </div>
+        <h3 class="fw-bold text-dark">Xin chào, BS. <%= user.full_name %>!</h3>
+        <p class="text-muted lead">Chúc bác sĩ một ngày làm việc hiệu quả.</p>
+        <hr class="w-25 mx-auto my-4">
+        <div class="d-flex justify-content-center gap-3">
+            <a href="/doctor/appointments" class="btn btn-primary px-4 rounded-pill">
+                <i class="fas fa-calendar-alt me-2"></i>Xem lịch khám
+            </a>
+            <a href="/chat" class="btn btn-outline-primary px-4 rounded-pill">
+                <i class="fas fa-comments me-2"></i>Tư vấn bệnh nhân
+            </a>
+        </div>
+    </div>
+</div>

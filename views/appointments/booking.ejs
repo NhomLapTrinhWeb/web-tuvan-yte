@@ -1,40 +1,137 @@
-<div class="container">
-  <h1>Đặt lịch khám</h1>
-  
-  <form action="/appointments/booking" method="POST" class="booking-form">
-    <div class="form-group">
-      <label for="doctorId">Chọn bác sĩ</label>
-      <select name="doctorId" id="doctorId" required>
-        <option value="">-- Chọn bác sĩ --</option>
-        <% doctors.forEach(doctor => { %>
-          <option value="<%= doctor.id %>"><%= doctor.fullName %> - <%= doctor.specialization %></option>
-        <% }) %>
-      </select>
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card shadow-lg border-0 rounded-3">
+                <div class="card-header bg-primary text-white p-4 rounded-top d-flex justify-content-between align-items-center">
+                    <div>
+                        <h3 class="mb-0 fw-bold"><i class="fas fa-calendar-plus me-2"></i>Đặt Lịch Khám</h3>
+                        <p class="mb-0 opacity-75 mt-1">Điền thông tin để đăng ký khám bệnh</p>
+                    </div>
+                    <a href="/" class="btn btn-outline-light btn-sm">
+                        <i class="fas fa-home me-1"></i> Trang chủ
+                    </a>
+                </div>
+
+                <div class="card-body p-4">
+                    <% if (typeof user !== 'undefined' && user) { %>
+                        <div class="alert alert-info border-0 d-flex align-items-center mb-4" role="alert">
+                            <div class="bg-white text-info rounded-circle d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px;">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <div>
+                                <small class="text-uppercase fw-bold opacity-75">Người đặt lịch</small>
+                                <div class="fw-bold fs-5"><%= user.full_name %></div>
+                                <small><i class="fas fa-phone-alt me-1"></i> <%= user.phone || 'Chưa cập nhật SĐT' %> (Email: <%= user.email %>)</small>
+                            </div>
+                        </div>
+                    <% } %>
+
+                    <form id="bookingForm">
+                        <div class="mb-4">
+                            <label for="doctor_id" class="form-label fw-bold">Chọn Bác sĩ & Chuyên khoa <span class="text-danger">*</span></label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light"><i class="fas fa-user-md text-primary"></i></span>
+                                <select class="form-select form-select-lg" id="doctor_id" name="doctor_id" required>
+                                    <option value="">-- Vui lòng chọn bác sĩ --</option>
+                                    <% if(typeof doctors !== 'undefined' && doctors.length > 0) { %>
+                                        <% doctors.forEach(doc => { %>
+                                            <option value="<%= doc.id %>">
+                                                BS. <%= doc.user ? doc.user.full_name : 'Ẩn danh' %>
+                                                - Khoa: <%= doc.specialty ? doc.specialty.name : 'Tổng quát' %>
+                                            </option>
+                                        <% }) %>
+                                    <% } else { %>
+                                        <option value="" disabled>Không có bác sĩ nào</option>
+                                    <% } %>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-4">
+                                <label for="appointment_date" class="form-label fw-bold">Ngày mong muốn <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light"><i class="fas fa-calendar-alt text-primary"></i></span>
+                                    <input type="date" class="form-control form-control-lg" id="appointment_date" name="appointment_date" required>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6 mb-4">
+                                <label for="time_slot" class="form-label fw-bold">Khung giờ <span class="text-danger">*</span></label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light"><i class="fas fa-clock text-primary"></i></span>
+                                    <select class="form-select form-select-lg" id="time_slot" name="time_slot" required>
+                                        <option value="">-- Chọn giờ --</option>
+                                        <option value="08:00 - 09:00">08:00 - 09:00</option>
+                                        <option value="09:00 - 10:00">09:00 - 10:00</option>
+                                        <option value="10:00 - 11:00">10:00 - 11:00</option>
+                                        <option value="13:30 - 14:30">13:30 - 14:30</option>
+                                        <option value="14:30 - 15:30">14:30 - 15:30</option>
+                                        <option value="15:30 - 16:30">15:30 - 16:30</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label for="reason" class="form-label fw-bold">Lý do khám / Triệu chứng <span class="text-danger">*</span></label>
+                            <textarea class="form-control" id="reason" name="reason" rows="4" placeholder="Mô tả triệu chứng của bạn (Ví dụ: Đau đầu, sốt cao, ho...)" required></textarea>
+                        </div>
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                            <a href="/" class="btn btn-light btn-lg px-4 me-md-2 fw-bold">Hủy bỏ</a>
+                            <button type="submit" class="btn btn-primary btn-lg px-5 fw-bold shadow-sm transition-hover">
+                                <i class="fas fa-paper-plane me-2"></i>Gửi Đăng Ký
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
     </div>
-    
-    <div class="form-group">
-      <label for="appointmentDate">Ngày khám</label>
-      <input type="date" name="appointmentDate" id="appointmentDate" required>
-    </div>
-    
-    <div class="form-group">
-      <label for="timeSlot">Giờ khám</label>
-      <select name="timeSlot" id="timeSlot" required>
-        <option value="">-- Chọn giờ --</option>
-        <option value="08:00-09:00">08:00 - 09:00</option>
-        <option value="09:00-10:00">09:00 - 10:00</option>
-        <option value="10:00-11:00">10:00 - 11:00</option>
-        <option value="14:00-15:00">14:00 - 15:00</option>
-        <option value="15:00-16:00">15:00 - 16:00</option>
-        <option value="16:00-17:00">16:00 - 17:00</option>
-      </select>
-    </div>
-    
-    <div class="form-group">
-      <label for="reason">Lý do khám</label>
-      <textarea name="reason" id="reason" rows="4" placeholder="Mô tả triệu chứng..."></textarea>
-    </div>
-    
-    <button type="submit" class="btn btn-primary">Đặt lịch</button>
-  </form>
 </div>
+
+<script>
+    // Thiết lập ngày tối thiểu là hôm nay
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('appointment_date').setAttribute('min', today);
+
+    document.getElementById('bookingForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const formData = {
+            doctor_id: document.getElementById('doctor_id').value,
+            appointment_date: document.getElementById('appointment_date').value,
+            time_slot: document.getElementById('time_slot').value,
+            reason: document.getElementById('reason').value
+        };
+
+        const btn = this.querySelector('button[type="submit"]');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Đang xử lý...';
+        btn.disabled = true;
+
+        try {
+            const response = await fetch('/appointments/booking', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData)
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                alert('✅ ' + result.message);
+                window.location.href = '/';
+            } else {
+                alert('❌ Lỗi: ' + result.message);
+            }
+        } catch (error) {
+            console.error(error);
+            alert('❌ Có lỗi xảy ra khi kết nối server');
+        } finally {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
+    });
+</script>

@@ -1,0 +1,36 @@
+body {
+    font-family: 'Roboto', sans-serif;
+    overflow-x: hidden;
+}
+
+#sidebar-wrapper {
+    min-width: 250px;
+    max-width: 250px;
+    transition: margin 0.25s ease-out;
+}
+
+#sidebar-wrapper .list-group-item {
+    font-size: 0.95rem;
+    padding: 12px 20px;
+    transition: all 0.3s;
+}
+
+#sidebar-wrapper .list-group-item:hover {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+    padding-left: 25px; /* Hiệu ứng đẩy nhẹ sang phải */
+}
+
+#sidebar-wrapper .list-group-item.active {
+    background-color: #0d6efd !important; /* Bootstrap Primary Color */
+    font-weight: bold;
+}
+
+.card {
+    border: none;
+    border-radius: 10px;
+    transition: transform 0.2s;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+}

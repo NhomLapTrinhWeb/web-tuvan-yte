@@ -8,9 +8,10 @@ async function createDatabaseIfNotExists() {
   try {
     console.log('🔄 Đang kết nối MySQL server...');
     
-    // Kết nối đến MySQL server (không chỉ định database)
+    // KẾT NỐI: Đã thêm dòng PORT ở dưới để nhận diện cổng 3307
     connection = await mysql.createConnection({
       host: process.env.DB_HOST || 'localhost',
+      port: process.env.DB_PORT || 3306, // <--- ĐÃ SỬA: Thêm dòng này
       user: process.env.DB_USER || 'root',
       password: process.env.DB_PASSWORD || ''
     });
@@ -18,7 +19,7 @@ async function createDatabaseIfNotExists() {
     console.log('✅ Kết nối MySQL thành công!');
 
     const dbName = process.env.DB_NAME || 'hospital_booking';
-    
+
     // Tạo database nếu chưa tồn tại
     console.log(`\n🔄 Đang tạo database '${dbName}'...`);
     await connection.query(`CREATE DATABASE IF NOT EXISTS \`${dbName}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci`);
@@ -30,7 +31,7 @@ async function createDatabaseIfNotExists() {
     console.error('❌ Lỗi:', error.message);
     console.error('\nℹ️  Hãy kiểm tra:');
     console.error('   - MySQL server đã chạy chưa?');
-    console.error('   - Thông tin trong file .env đúng chưa?');
+    console.error('   - Thông tin trong file .env đúng chưa (đặc biệt là DB_PORT)?');
     console.error('   - User có quyền CREATE DATABASE không?');
     throw error;
   } finally {

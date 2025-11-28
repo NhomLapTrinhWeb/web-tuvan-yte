@@ -30,6 +30,31 @@ const adminController = {
     }
   },
 
+    // Hàm hiển thị trang danh sách người dùng
+    showUsersList(req, res) {
+      res.render('admin/users/index', {
+        title: 'Quản Lý Người Dùng'
+      });
+    },
+
+    // ... (bên dưới hàm showUsersList)
+
+    // Hàm hiển thị trang danh sách bác sĩ
+    showDoctorsList(req, res) {
+    res.render('admin/doctors/index', {
+      title: 'Quản Lý Bác Sĩ'
+    });
+    },
+
+  // ... (bên dưới hàm showDoctorsList)
+
+    // Hàm hiển thị trang danh sách lịch hẹn
+    showAppointmentsList(req, res) {
+    res.render('admin/appointments/index', {
+    title: 'Quản Lý Lịch Hẹn'
+    });
+    },
+
   /**
    * Get all users with filters
    */
@@ -210,56 +235,72 @@ const adminController = {
   },
 
   /**
-   * Get all appointments
-   */
-  async getAppointments(req, res) {
-    try {
-      const {
-        page = 1,
-        limit = 20,
-        status = null,
-        date_from = null,
-        date_to = null
-      } = req.query;
-      const offset = (page - 1) * limit;
+     * Get all appointments (Đã sửa lỗi Alias 'as')
+     */
+    async getAppointments(req, res) {
+      try {
+        const {
+          page = 1,
+          limit = 20,
+          status = null,
+          date_from = null,
+          date_to = null
+        } = req.query;
+        const offset = (page - 1) * limit;
 
-      const where = {};
-      if (status) where.status = status;
-      if (date_from && date_to) {
-        where.appointment_date = {
-          [Op.between]: [date_from, date_to]
-        };
-      }
-
-      const { count, rows } = await Appointment.findAndCountAll({
-        where,
-        include: [
-          { model: Patient, as: 'patient', include: [{ model: User, as: 'user' }] },
-          { model: Doctor, as: 'doctor', include: [{ model: User, as: 'user' }] }
-        ],
-        order: [['appointment_date', 'DESC'], ['time_slot', 'DESC']],
-        limit: parseInt(limit),
-        offset: parseInt(offset)
-      });
-
-      return res.json({
-        success: true,
-        data: rows,
-        metadata: {
-          page: parseInt(page),
-          limit: parseInt(limit),
-          total: count,
-          total_pages: Math.ceil(count / limit)
+        const where = {};
+        if (status) where.status = status;
+        if (date_from && date_to) {
+          where.appointment_date = {
+            [Op.between]: [date_from, date_to]
+          };
         }
-      });
-    } catch (error) {
-      console.error('Get appointments error:', error);
-      return res.status(500).json({
-        success: false,
-        message: 'Internal server error'
-      });
-    }
-  },
+
+        console.log('--- Đang lấy danh sách Lịch hẹn (Fixed Alias)... ---');
+
+        const { count, rows } = await Appointment.findAndCountAll({
+          where,
+          include: [
+            {
+                model: Patient,
+                // 👇 SỬA Ở ĐÂY: Thêm "as: 'user'" để khớp với model
+                include: [{ model: User, as: 'user', attributes: ['full_name', 'phone'] }]
+            },
+            {
+                model: Doctor,
+                include: [
+                    // 👇 SỬA Ở ĐÂY: Thêm "as: 'user'"
+                    { model: User, as: 'user', attributes: ['full_name'] },
+                    // 👇 SỬA Ở ĐÂY: Thêm "as: 'specialty'" (vì trong model Doctor có as: specialty)
+                    { model: Specialty, as: 'specialty', attributes: ['name'] }
+                ]
+            }
+          ],
+          order: [['appointment_date', 'DESC'], ['time_slot', 'DESC']],
+          limit: parseInt(limit),
+          offset: parseInt(offset)
+        });
+
+        console.log(`✅ Lấy thành công ${count} lịch hẹn!`);
+
+        return res.json({
+          success: true,
+          data: rows,
+          metadata: {
+            page: parseInt(page),
+            limit: parseInt(limit),
+            total: count,
+            total_pages: Math.ceil(count / limit)
+          }
+        });
+      } catch (error) {
+        console.error('🔥 LỖI GET APPOINTMENTS:', error);
+        return res.status(500).json({
+          success: false,
+          message: 'Lỗi server: ' + error.message
+        });
+      }
+    },
 
   /**
    * Get all transactions

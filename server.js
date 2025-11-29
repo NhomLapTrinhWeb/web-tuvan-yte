@@ -130,6 +130,7 @@ sequelize.authenticate()
 
 // Socket.io
 require('./socket/chatSocket')(io);
+require('./socket/voiceCallSocket')(io);
 app.set('io', io);
 NotificationService.setIO(io);
 

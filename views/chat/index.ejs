@@ -105,10 +105,20 @@
                         <div class="p-3 border-bottom bg-white d-flex align-items-center">
                             <img id="headerAvatar" src="https://ui-avatars.com/api/?name=Chat&background=0D8ABC&color=fff" 
                                  class="rounded-circle me-3" width="40" height="40" style="object-fit: cover;">
-                            <div>
+                            <div class="flex-grow-1">
                                 <h6 id="headerName" class="mb-0 fw-bold">Chọn cuộc hội thoại</h6>
                                 <small class="text-success"><i class="fas fa-circle me-1" style="font-size: 8px;"></i>Online</small>
                             </div>
+                            <!-- Nút gọi điện -->
+                            <button type="button" id="voiceCallBtn" class="btn btn-success btn-sm rounded-circle me-2" 
+                                    title="Gọi thoại" style="width: 40px; height: 40px; display: none;">
+                                <i class="fas fa-phone-alt"></i>
+                            </button>
+                            <!-- Nút video call -->
+                            <button type="button" id="videoCallBtn" class="btn btn-primary btn-sm rounded-circle me-2" 
+                                    title="Video call" style="width: 40px; height: 40px; display: none;">
+                                <i class="fas fa-video"></i>
+                            </button>
                         </div>
 
                         <!-- Messages Area -->
@@ -141,6 +151,7 @@
 </div>
 
 <script src="/socket.io/socket.io.js"></script>
+<script src="/js/voiceCall.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Kiểm tra user đã đăng nhập
@@ -156,8 +167,43 @@ document.addEventListener('DOMContentLoaded', function() {
     const messageInput = document.getElementById('messageInput');
     const appointmentIdInput = document.getElementById('appointmentId');
     const receiverIdInput = document.getElementById('receiverId');
+    const voiceCallBtn = document.getElementById('voiceCallBtn');
+    const videoCallBtn = document.getElementById('videoCallBtn');
     
     const notiSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2354/2354-preview.mp3');
+
+    // Khởi tạo Voice Call Manager (hỗ trợ cả voice và video)
+    const voiceCallManager = new VoiceCallManager(socket, currentUserId);
+
+    // Xử lý nút gọi thoại
+    if (voiceCallBtn) {
+        voiceCallBtn.addEventListener('click', function() {
+            const receiverId = receiverIdInput ? parseInt(receiverIdInput.value) : null;
+            const appointmentId = appointmentIdInput ? appointmentIdInput.value : null;
+            
+            if (!receiverId) {
+                alert('Vui lòng chọn cuộc hội thoại trước khi gọi');
+                return;
+            }
+            
+            voiceCallManager.initiateCall(receiverId, appointmentId, 'voice');
+        });
+    }
+
+    // Xử lý nút video call
+    if (videoCallBtn) {
+        videoCallBtn.addEventListener('click', function() {
+            const receiverId = receiverIdInput ? parseInt(receiverIdInput.value) : null;
+            const appointmentId = appointmentIdInput ? appointmentIdInput.value : null;
+            
+            if (!receiverId) {
+                alert('Vui lòng chọn cuộc hội thoại trước khi gọi');
+                return;
+            }
+            
+            voiceCallManager.initiateCall(receiverId, appointmentId, 'video');
+        });
+    }
 
     // Kiểm tra elements tồn tại
     if (!chatBox || !chatForm || !messageInput) {
@@ -304,6 +350,10 @@ document.addEventListener('DOMContentLoaded', function() {
         const headerAvatar = document.getElementById('headerAvatar');
         if (headerName) headerName.innerText = name || 'Cuộc hội thoại';
         if (headerAvatar) headerAvatar.src = avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(name || 'User')}&background=0D8ABC&color=fff`;
+        
+        // Hiện nút gọi điện và video call
+        if (voiceCallBtn) voiceCallBtn.style.display = 'inline-flex';
+        if (videoCallBtn) videoCallBtn.style.display = 'inline-flex';
         
         // Highlight active item
         document.querySelectorAll('.chat-item').forEach(item => item.classList.remove('active'));

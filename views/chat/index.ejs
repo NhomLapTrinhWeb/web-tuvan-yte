@@ -1,95 +1,253 @@
-<script src="/socket.io/socket.io.js"></script>
+<style>
+    .chat-container {
+        height: calc(100vh - 200px);
+        min-height: 500px;
+    }
+    .chat-sidebar {
+        background: #f8f9fa;
+        border-right: 1px solid #e9ecef;
+    }
+    .chat-item {
+        padding: 15px;
+        border-bottom: 1px solid #e9ecef;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .chat-item:hover, .chat-item.active {
+        background: #e3f2fd;
+    }
+    .chat-messages {
+        height: calc(100% - 140px);
+        overflow-y: auto;
+        padding: 20px;
+        background: #f5f7fb;
+    }
+    .message-bubble {
+        padding: 12px 16px;
+        border-radius: 18px;
+        max-width: 100%;
+        word-wrap: break-word;
+    }
+    .message-sent {
+        background: linear-gradient(135deg, #0066CC 0%, #0052a3 100%);
+        color: white;
+        border-bottom-right-radius: 4px;
+    }
+    .message-received {
+        background: white;
+        color: #333;
+        border: 1px solid #e9ecef;
+        border-bottom-left-radius: 4px;
+    }
+    .chat-input-area {
+        background: white;
+        border-top: 1px solid #e9ecef;
+        padding: 15px;
+    }
+    .no-chat-selected {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        color: #6c757d;
+    }
+</style>
 
+<div class="container-fluid py-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm chat-container">
+                <div class="row g-0 h-100">
+                    <!-- Sidebar: Danh sách cuộc hội thoại -->
+                    <div class="col-md-4 col-lg-3 chat-sidebar">
+                        <div class="p-3 border-bottom bg-white">
+                            <h5 class="mb-0 fw-bold text-primary">
+                                <i class="fas fa-comments me-2"></i>Tin nhắn
+                            </h5>
+                        </div>
+                        <div class="overflow-auto" style="height: calc(100% - 60px);">
+                            <!-- Placeholder: Danh sách cuộc trò chuyện -->
+                            <div id="conversationList">
+                                <% if (typeof appointments !== 'undefined' && appointments && appointments.length > 0) { %>
+                                    <% appointments.forEach((apt, index) => { %>
+                                        <div class="chat-item <%= index === 0 ? 'active' : '' %>" 
+                                             onclick="selectConversation(<%= apt.id %>, <%= apt.doctor_id || apt.patient_id %>, '<%= apt.doctorName || apt.patientName || 'Người dùng' %>', '<%= apt.avatar || '' %>')">
+                                            <div class="d-flex align-items-center">
+                                                <img src="<%= apt.avatar || 'https://ui-avatars.com/api/?name=User&background=0D8ABC&color=fff' %>" 
+                                                     class="rounded-circle me-3" width="45" height="45" style="object-fit: cover;">
+                                                <div class="flex-grow-1 overflow-hidden">
+                                                    <h6 class="mb-0 fw-bold text-truncate"><%= apt.doctorName || apt.patientName || 'Cuộc hội thoại' %></h6>
+                                                    <small class="text-muted text-truncate d-block">Lịch hẹn #<%= apt.id %></small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    <% }); %>
+                                <% } else { %>
+                                    <div class="text-center text-muted py-5">
+                                        <i class="fas fa-inbox fa-3x mb-3 opacity-50"></i>
+                                        <p class="mb-0">Chưa có cuộc hội thoại nào</p>
+                                        <small>Đặt lịch khám để bắt đầu chat với bác sĩ</small>
+                                        <div class="mt-3">
+                                            <a href="/appointments/booking" class="btn btn-primary btn-sm">
+                                                <i class="fas fa-calendar-plus me-1"></i>Đặt lịch ngay
+                                            </a>
+                                        </div>
+                                    </div>
+                                <% } %>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Main Chat Area -->
+                    <div class="col-md-8 col-lg-9 d-flex flex-column">
+                        <!-- Chat Header -->
+                        <div class="p-3 border-bottom bg-white d-flex align-items-center">
+                            <img id="headerAvatar" src="https://ui-avatars.com/api/?name=Chat&background=0D8ABC&color=fff" 
+                                 class="rounded-circle me-3" width="40" height="40" style="object-fit: cover;">
+                            <div>
+                                <h6 id="headerName" class="mb-0 fw-bold">Chọn cuộc hội thoại</h6>
+                                <small class="text-success"><i class="fas fa-circle me-1" style="font-size: 8px;"></i>Online</small>
+                            </div>
+                        </div>
+
+                        <!-- Messages Area -->
+                        <div class="chat-messages flex-grow-1" id="chatBox">
+                            <div class="no-chat-selected">
+                                <i class="fas fa-comments fa-4x mb-3 opacity-25"></i>
+                                <h5>Chào mừng đến tư vấn trực tuyến</h5>
+                                <p class="text-center">Chọn một cuộc hội thoại bên trái<br>hoặc đặt lịch khám để bắt đầu chat với bác sĩ</p>
+                            </div>
+                        </div>
+
+                        <!-- Input Area -->
+                        <div class="chat-input-area">
+                            <form id="chatForm" class="d-flex gap-2">
+                                <input type="hidden" id="appointmentId" value="<%= typeof appointments !== 'undefined' && appointments && appointments[0] ? appointments[0].id : '' %>">
+                                <input type="hidden" id="receiverId" value="<%= typeof appointments !== 'undefined' && appointments && appointments[0] ? (appointments[0].doctor_id || appointments[0].patient_id || '') : '' %>">
+                                
+                                <input type="text" id="messageInput" class="form-control rounded-pill" 
+                                       placeholder="Nhập tin nhắn..." autocomplete="off">
+                                <button type="submit" class="btn btn-primary rounded-circle" style="width: 45px; height: 45px;">
+                                    <i class="fas fa-paper-plane"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
 <script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Kiểm tra user đã đăng nhập
+    <% if (typeof user === 'undefined' || !user) { %>
+        console.log('User chưa đăng nhập');
+        return;
+    <% } %>
+
     const socket = io();
-    const currentUserId = <%= user.id %>;
+    const currentUserId = <%= user ? user.id : 0 %>;
     const chatBox = document.getElementById('chatBox');
+    const chatForm = document.getElementById('chatForm');
+    const messageInput = document.getElementById('messageInput');
+    const appointmentIdInput = document.getElementById('appointmentId');
+    const receiverIdInput = document.getElementById('receiverId');
+    
     const notiSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2354/2354-preview.mp3');
 
-    // 1. Kết nối
+    // Kiểm tra elements tồn tại
+    if (!chatBox || !chatForm || !messageInput) {
+        console.error('Chat elements not found');
+        return;
+    }
+
+    // 1. Kết nối Socket
     socket.emit('join', currentUserId);
+    console.log('✅ Socket connected, User ID:', currentUserId);
 
-    // 2. TỰ ĐỘNG TẢI TIN NHẮN CŨ (NEW)
-    document.addEventListener('DOMContentLoaded', () => {
-        loadChatHistory();
-    });
-
+    // 2. Tải tin nhắn cũ
     async function loadChatHistory() {
-        // Lấy ID cuộc hội thoại đang mở (Hiện tại đang fix cứng là 1)
-        const appointmentId = document.getElementById('appointmentId').value;
+        const appointmentId = appointmentIdInput ? appointmentIdInput.value : '';
+        
+        if (!appointmentId) {
+            console.log('Chưa chọn cuộc hội thoại');
+            return;
+        }
 
         try {
-            // Gọi API lấy tin nhắn từ Database
             const res = await fetch(`/api/chat/history/${appointmentId}`);
             const result = await res.json();
 
-            chatBox.innerHTML = ''; // Xóa sạch màn hình trước khi vẽ
+            if (result.success && result.data && result.data.length > 0) {
+                chatBox.innerHTML = '<div class="text-center text-muted small my-3">-- Lịch sử trò chuyện --</div>';
 
-            if(result.success && result.data.length > 0) {
-                // Thêm dòng thông báo ngày tháng
-                chatBox.innerHTML += '<div class="text-center text-muted small my-3">-- Lịch sử trò chuyện --</div>';
-
-                // Vòng lặp vẽ lại từng tin nhắn cũ
                 result.data.forEach(msg => {
                     const isSender = msg.sender_id === currentUserId;
-
-                    // Xử lý Avatar & Tên (đề phòng user bị xóa)
                     let senderName = msg.sender ? msg.sender.full_name : 'Người dùng';
                     let senderAvatar = (msg.sender && msg.sender.avatar)
                         ? msg.sender.avatar
-                        : 'https://placehold.co/100x100/e9ecef/6c757d?text=' + senderName.charAt(0);
+                        : `https://ui-avatars.com/api/?name=${encodeURIComponent(senderName)}&background=0D8ABC&color=fff`;
 
-                    // Gọi hàm vẽ tin nhắn
                     appendMessage(msg.message, isSender, msg.created_at, senderAvatar, senderName);
                 });
 
-                // Cuộn xuống dưới cùng để xem tin mới nhất
                 scrollToBottom();
             } else {
-                chatBox.innerHTML = '<div class="text-center text-muted small my-5">Chưa có tin nhắn nào. Hãy bắt đầu cuộc trò chuyện!</div>';
+                chatBox.innerHTML = '<div class="text-center text-muted small my-5"><i class="fas fa-comments fa-2x mb-2 opacity-50"></i><br>Chưa có tin nhắn nào.<br>Hãy bắt đầu cuộc trò chuyện!</div>';
             }
         } catch (err) {
             console.error('Lỗi tải history:', err);
-            chatBox.innerHTML = '<div class="text-center text-danger small my-3">Không thể tải tin nhắn cũ.</div>';
+            chatBox.innerHTML = '<div class="text-center text-danger small my-3"><i class="fas fa-exclamation-triangle me-2"></i>Không thể tải tin nhắn cũ.</div>';
         }
     }
 
-    // 3. Xử lý Gửi tin nhắn
-    document.getElementById('chatForm').addEventListener('submit', function(e) {
+    // 3. Gửi tin nhắn
+    chatForm.addEventListener('submit', function(e) {
         e.preventDefault();
-        const input = document.getElementById('messageInput');
-        const message = input.value.trim();
-        const receiverId = document.getElementById('receiverId').value;
-        const appointmentId = document.getElementById('appointmentId').value;
+        const message = messageInput.value.trim();
+        const receiverId = receiverIdInput ? receiverIdInput.value : '';
+        const appointmentId = appointmentIdInput ? appointmentIdInput.value : '';
 
-        if (message) {
-            socket.emit('send_message', {
-                appointmentId: appointmentId,
-                receiverId: receiverId,
-                message: message,
-                messageType: 'text'
-            });
-            input.value = '';
+        if (!message) return;
+        
+        if (!appointmentId || !receiverId) {
+            alert('Vui lòng chọn cuộc hội thoại trước khi gửi tin nhắn');
+            return;
         }
+
+        socket.emit('send_message', {
+            appointmentId: appointmentId,
+            receiverId: parseInt(receiverId),
+            message: message,
+            messageType: 'text'
+        });
+        
+        messageInput.value = '';
     });
 
     // 4. Nhận tin nhắn mới (Real-time)
     socket.on('new_message', (data) => {
         const isMyMessage = data.senderId === currentUserId;
-        const senderName = data.sender.name;
-        const senderAvatar = data.sender.avatar || 'https://placehold.co/100x100/e9ecef/6c757d?text=' + senderName.charAt(0);
+        const senderName = data.sender ? data.sender.name : 'Người dùng';
+        const senderAvatar = (data.sender && data.sender.avatar) 
+            ? data.sender.avatar 
+            : `https://ui-avatars.com/api/?name=${encodeURIComponent(senderName)}&background=0D8ABC&color=fff`;
 
         appendMessage(data.message, isMyMessage, data.timestamp, senderAvatar, senderName);
-
-        // Chỉ cuộn xuống nếu đang ở gần cuối (tránh làm phiền khi user đang đọc tin cũ)
         scrollToBottom();
 
-        if (!isMyMessage) notiSound.play().catch(() => {});
+        if (!isMyMessage) {
+            notiSound.play().catch(() => {});
+        }
     });
 
-    // Hàm vẽ giao diện tin nhắn
+    // Hàm vẽ tin nhắn
     function appendMessage(text, isSender, time, avatarUrl, name) {
-        const timeStr = new Date(time || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const timeStr = new Date(time || Date.now()).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
 
         const avatarHtml = !isSender
             ? `<img src="${avatarUrl}" class="rounded-circle me-2 align-self-end shadow-sm" width="35" height="35" title="${name}" style="object-fit: cover;">`
@@ -101,15 +259,20 @@
                 <div style="max-width: 75%;">
                     ${!isSender ? `<small class="text-muted ms-1 d-block mb-1" style="font-size: 11px;">${name}</small>` : ''}
                     <div class="message-bubble ${isSender ? 'message-sent shadow-sm' : 'message-received shadow-sm'}">
-                        <p class="mb-1">${text}</p>
+                        <p class="mb-1">${escapeHtml(text)}</p>
                         <small class="${isSender ? 'text-white-50' : 'text-muted'} d-block text-end" style="font-size: 0.65rem; margin-top: 4px;">${timeStr}</small>
                     </div>
                 </div>
             </div>
         `;
 
-        // Xóa dòng "Chưa có tin nhắn" nếu có
-        if(chatBox.innerHTML.includes('Chưa có tin nhắn')) chatBox.innerHTML = '';
+        // Xóa placeholder nếu có
+        const placeholder = chatBox.querySelector('.no-chat-selected');
+        if (placeholder) placeholder.remove();
+        
+        if (chatBox.innerHTML.includes('Chưa có tin nhắn')) {
+            chatBox.innerHTML = '';
+        }
 
         chatBox.insertAdjacentHTML('beforeend', html);
     }
@@ -118,17 +281,41 @@
         chatBox.scrollTop = chatBox.scrollHeight;
     }
 
+    // Escape HTML để tránh XSS
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    // Lỗi socket
     socket.on('error', (err) => {
-        // alert('⚠️ Lỗi: ' + err.message); // Tạm tắt alert để đỡ phiền nếu lỗi nhỏ
         console.error('Socket Error:', err);
     });
 
-    // Hàm chọn hội thoại (Dùng sau này khi làm list chat động)
-    function selectConversation(appointId, docId, name, avatar) {
-        document.getElementById('appointmentId').value = appointId;
-        document.getElementById('receiverId').value = docId;
-        document.getElementById('headerName').innerText = name;
-        document.getElementById('headerAvatar').src = avatar;
-        loadChatHistory(); // Tải lại tin nhắn mới
+    // Hàm chọn hội thoại
+    window.selectConversation = function(appointId, recipientId, name, avatar) {
+        // Cập nhật hidden inputs
+        if (appointmentIdInput) appointmentIdInput.value = appointId;
+        if (receiverIdInput) receiverIdInput.value = recipientId;
+        
+        // Cập nhật header
+        const headerName = document.getElementById('headerName');
+        const headerAvatar = document.getElementById('headerAvatar');
+        if (headerName) headerName.innerText = name || 'Cuộc hội thoại';
+        if (headerAvatar) headerAvatar.src = avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(name || 'User')}&background=0D8ABC&color=fff`;
+        
+        // Highlight active item
+        document.querySelectorAll('.chat-item').forEach(item => item.classList.remove('active'));
+        event.currentTarget.classList.add('active');
+        
+        // Tải lại tin nhắn
+        loadChatHistory();
+    };
+
+    // Auto load nếu có appointment
+    if (appointmentIdInput && appointmentIdInput.value) {
+        loadChatHistory();
     }
+});
 </script>

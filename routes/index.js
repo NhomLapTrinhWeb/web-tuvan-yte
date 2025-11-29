@@ -28,6 +28,19 @@ router.get('/register', (req, res) => {
   res.render('auth/register', { layout: false });
 });
 
+// ===== LOGOUT (GET for browser redirect) =====
+router.get('/logout', (req, res) => {
+  // Clear cookies
+  res.clearCookie('access_token');
+  res.clearCookie('refresh_token');
+  // Destroy session if exists
+  if (req.session) {
+    req.session.destroy(() => {});
+  }
+  // Redirect to homepage
+  res.redirect('/');
+});
+
 // ===== DOCTOR ROUTES =====
 router.get('/doctors', doctorController.index);
 router.get('/doctors/:id', doctorController.show);

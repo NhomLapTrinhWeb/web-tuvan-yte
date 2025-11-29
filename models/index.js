@@ -59,6 +59,16 @@ Post.belongsTo(User, { foreignKey: 'author_id', as: 'author' });
 Doctor.hasMany(Schedule, { foreignKey: 'doctor_id', as: 'schedules' });
 Schedule.belongsTo(Doctor, { foreignKey: 'doctor_id', as: 'doctor' });
 
+// 7. Message System (Chat)
+User.hasMany(Message, { foreignKey: 'sender_id', as: 'sentMessages' });
+Message.belongsTo(User, { foreignKey: 'sender_id', as: 'sender' });
+
+User.hasMany(Message, { foreignKey: 'receiver_id', as: 'receivedMessages' });
+Message.belongsTo(User, { foreignKey: 'receiver_id', as: 'receiver' });
+
+Appointment.hasMany(Message, { foreignKey: 'appointment_id', as: 'messages' });
+Message.belongsTo(Appointment, { foreignKey: 'appointment_id', as: 'appointment' });
+
 module.exports = {
   sequelize,
   User,

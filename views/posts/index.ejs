@@ -24,7 +24,7 @@
                                     </span>
                                     <span class="text-muted">
                                         <i class="far fa-clock me-1"></i>
-                                        <%= new Date(post.created_at).toLocaleDateString('vi-VN') %>
+                                        <%= post.published_at ? new Date(post.published_at).toLocaleDateString('vi-VN') : (post.createdAt ? new Date(post.createdAt).toLocaleDateString('vi-VN') : '30/11/2025') %>
                                     </span>
                                 </div>
 

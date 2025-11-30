@@ -135,6 +135,144 @@ const adminController = {
   },
 
   /**
+   * Change user role (promote to doctor / demote to patient)
+   */
+  async changeUserRole(req, res) {
+    try {
+      const { id } = req.params;
+      const { role } = req.body;
+
+      // Validate role
+      if (!['doctor', 'patient'].includes(role)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Role không hợp lệ. Chỉ chấp nhận: doctor, patient'
+        });
+      }
+
+      const user = await User.findByPk(id);
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          message: 'Không tìm thấy người dùng'
+        });
+      }
+
+      // Không cho phép thay đổi role của admin
+      if (user.role === 'admin') {
+        return res.status(403).json({
+          success: false,
+          message: 'Không thể thay đổi role của Admin'
+        });
+      }
+
+      // Nếu role hiện tại đã là role mới thì không cần thay đổi
+      if (user.role === role) {
+        return res.json({
+          success: true,
+          message: `Người dùng đã có role ${role === 'doctor' ? 'Bác sĩ' : 'Bệnh nhân'}`
+        });
+      }
+
+      // Bắt đầu transaction
+      const transaction = await User.sequelize.transaction();
+
+      try {
+        // CẤP QUYỀN BÁC SĨ: patient -> doctor
+        if (role === 'doctor') {
+          // 1. Kiểm tra xem đã có Doctor record chưa
+          let doctor = await Doctor.findOne({ where: { user_id: id }, transaction });
+          
+          if (!doctor) {
+            // 2. Lấy specialty mặc định (specialty đầu tiên trong database)
+            const defaultSpecialty = await Specialty.findOne({ transaction });
+            
+            // 3. Tạo Doctor record mới
+            doctor = await Doctor.create({
+              user_id: id,
+              specialty_id: defaultSpecialty ? defaultSpecialty.id : null,
+              license_number: `LICENSE-${id}-${Date.now()}`, // Số giấy phép tạm
+              bio: 'Thông tin bác sĩ đang được cập nhật...',
+              consultation_fee: 200000, // Phí tư vấn mặc định
+              experience_years: 0,
+              is_approved: true // Admin cấp quyền thì auto approve
+            }, { transaction });
+          } else {
+            // Nếu đã có Doctor record, chỉ cần approve lại
+            await doctor.update({ is_approved: true }, { transaction });
+          }
+
+          // 4. Cập nhật role của user và thêm prefix "BS. " vào tên
+          let newFullName = user.full_name;
+          if (!user.full_name.startsWith('BS. ')) {
+            newFullName = 'BS. ' + user.full_name;
+          }
+          await user.update({ 
+            role: 'doctor',
+            full_name: newFullName
+          }, { transaction });
+        }
+        
+        // HỦY QUYỀN BÁC SĨ: doctor -> patient
+        else if (role === 'patient') {
+          // 1. Kiểm tra xem đã có Patient record chưa
+          let patient = await Patient.findOne({ where: { user_id: id }, transaction });
+          
+          if (!patient) {
+            // 2. Tạo Patient record mới
+            patient = await Patient.create({
+              user_id: id,
+              date_of_birth: null,
+              gender: null,
+              address: null,
+              blood_type: null,
+              allergies: null,
+              medical_history: null
+            }, { transaction });
+          }
+
+          // 3. Soft delete Doctor record (không xóa để giữ lịch sử)
+          const doctor = await Doctor.findOne({ where: { user_id: id }, transaction });
+          if (doctor) {
+            await doctor.update({ is_approved: false }, { transaction });
+          }
+
+          // 4. Cập nhật role của user và xóa prefix "BS. " khỏi tên
+          let newFullName = user.full_name;
+          if (user.full_name.startsWith('BS. ')) {
+            newFullName = user.full_name.replace('BS. ', '');
+          }
+          await user.update({ 
+            role: 'patient',
+            full_name: newFullName
+          }, { transaction });
+        }
+
+        // Commit transaction
+        await transaction.commit();
+
+        return res.json({
+          success: true,
+          message: role === 'doctor' 
+            ? `Đã cấp quyền Bác sĩ cho "${user.full_name}"` 
+            : `Đã chuyển "${user.full_name}" thành Bệnh nhân`
+        });
+
+      } catch (err) {
+        await transaction.rollback();
+        throw err;
+      }
+
+    } catch (error) {
+      console.error('Change user role error:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Có lỗi xảy ra: ' + error.message
+      });
+    }
+  },
+
+  /**
    * Get all doctors with filters
    */
   async getDoctors(req, res) {

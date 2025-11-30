@@ -107,6 +107,20 @@
             : '<span class="badge bg-secondary">Đã khóa</span>'}
         </td>
         <td>
+           ${user.role === 'patient' ? `
+             <button class="btn btn-sm btn-outline-primary me-1" 
+                     onclick="promoteToDoctor(${user.id}, '${user.full_name}')"
+                     title="Cấp quyền Bác sĩ">
+               <i class="fas fa-user-md"></i>
+             </button>
+           ` : ''}
+           ${user.role === 'doctor' ? `
+             <button class="btn btn-sm btn-outline-warning me-1" 
+                     onclick="demoteToPatient(${user.id}, '${user.full_name}')"
+                     title="Hủy quyền Bác sĩ">
+               <i class="fas fa-user"></i>
+             </button>
+           ` : ''}
            <button class="btn btn-sm ${user.is_active ? 'btn-outline-danger' : 'btn-outline-success'}"
                    onclick="toggleStatus(${user.id})"
                    title="${user.is_active ? 'Khóa tài khoản' : 'Mở khóa'}">
@@ -128,6 +142,50 @@
               loadUsers(currentPage); // Tải lại bảng
           } else {
               alert('Lỗi: ' + data.message);
+          }
+      } catch (err) {
+          alert('Có lỗi xảy ra');
+      }
+  }
+
+  // Cấp quyền Bác sĩ
+  async function promoteToDoctor(userId, userName) {
+      if(!confirm(`Bạn có chắc muốn cấp quyền BÁC SĨ cho "${userName}"?\n\nSau khi cấp quyền, người dùng này sẽ có thể:\n- Xem lịch hẹn khám\n- Tư vấn bệnh nhân\n- Quản lý bệnh nhân`)) return;
+
+      try {
+          const res = await fetch(`/admin/users/${userId}/change-role`, { 
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ role: 'doctor' })
+          });
+          const data = await res.json();
+          if(data.success) {
+              alert('✅ ' + data.message);
+              loadUsers(currentPage);
+          } else {
+              alert('❌ Lỗi: ' + data.message);
+          }
+      } catch (err) {
+          alert('Có lỗi xảy ra');
+      }
+  }
+
+  // Hủy quyền Bác sĩ
+  async function demoteToPatient(userId, userName) {
+      if(!confirm(`Bạn có chắc muốn HỦY quyền Bác sĩ của "${userName}"?\n\nNgười dùng này sẽ trở thành Bệnh nhân thường.`)) return;
+
+      try {
+          const res = await fetch(`/admin/users/${userId}/change-role`, { 
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ role: 'patient' })
+          });
+          const data = await res.json();
+          if(data.success) {
+              alert('✅ ' + data.message);
+              loadUsers(currentPage);
+          } else {
+              alert('❌ Lỗi: ' + data.message);
           }
       } catch (err) {
           alert('Có lỗi xảy ra');

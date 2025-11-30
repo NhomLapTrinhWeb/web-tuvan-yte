@@ -1,17 +1,106 @@
-<div class="container">
+<div class="container py-5">
   <article class="post-detail">
-    <h1><%= post.title %></h1>
-    <div class="post-meta">
-      <span>Tác giả: <%= post.author.fullName %></span>
-      <span>Ngày đăng: <%= new Date(post.publishedAt).toLocaleDateString('vi-VN') %></span>
-      <span>Danh mục: <%= post.Category.name %></span>
-      <span><%= post.views %> lượt xem</span>
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-4">
+      <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="/">Trang chủ</a></li>
+        <li class="breadcrumb-item"><a href="/posts">Tin tức</a></li>
+        <li class="breadcrumb-item active" aria-current="page"><%= post.title.substring(0, 30) %>...</li>
+      </ol>
+    </nav>
+
+    <!-- Title -->
+    <h1 class="fw-bold mb-4"><%= post.title %></h1>
+    
+    <!-- Meta -->
+    <div class="post-meta d-flex flex-wrap gap-3 mb-4 text-muted">
+      <span><i class="fas fa-user me-1"></i> <%= post.author ? post.author.full_name : 'Admin Hệ Thống' %></span>
+      <span><i class="fas fa-calendar me-1"></i> <%= post.published_at ? new Date(post.published_at).toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' }) : (post.createdAt ? new Date(post.createdAt).toLocaleDateString('vi-VN') : '30/11/2025') %></span>
+      <span><i class="fas fa-folder me-1"></i> <%= post.category || 'Tin tức' %></span>
+      <span><i class="fas fa-eye me-1"></i> <%= post.views || 0 %> lượt xem</span>
     </div>
     
-    <img src="<%= post.thumbnail || '/images/default-post.jpg' %>" alt="<%= post.title %>" class="post-thumbnail">
+    <!-- Thumbnail -->
+    <% if (post.thumbnail) { %>
+    <div class="mb-4">
+      <img src="<%= post.thumbnail %>" alt="<%= post.title %>" class="img-fluid rounded shadow-sm w-100" style="max-height: 500px; object-fit: cover;">
+    </div>
+    <% } %>
     
-    <div class="post-content">
+    <!-- Content -->
+    <div class="post-content bg-white p-4 rounded shadow-sm">
       <%- post.content %>
     </div>
+
+    <!-- Share buttons -->
+    <div class="mt-4 pt-4 border-top">
+      <span class="me-3"><strong>Chia sẻ:</strong></span>
+      <a href="https://www.facebook.com/sharer/sharer.php?u=<%= encodeURIComponent('http://localhost:3000/posts/' + post.slug) %>" target="_blank" class="btn btn-primary btn-sm me-2">
+        <i class="fab fa-facebook-f"></i> Facebook
+      </a>
+      <a href="#" class="btn btn-info btn-sm text-white me-2">
+        <i class="fab fa-twitter"></i> Twitter
+      </a>
+    </div>
   </article>
+
+  <!-- Related Posts -->
+  <% if (relatedPosts && relatedPosts.length > 0) { %>
+  <section class="mt-5 pt-4 border-top">
+    <h4 class="fw-bold mb-4"><i class="fas fa-newspaper me-2"></i>Bài viết liên quan</h4>
+    <div class="row g-4">
+      <% relatedPosts.forEach(related => { %>
+      <div class="col-md-4">
+        <div class="card h-100 border-0 shadow-sm">
+          <img src="<%= related.thumbnail || 'https://via.placeholder.com/400x200' %>" class="card-img-top" alt="<%= related.title %>" style="height: 150px; object-fit: cover;">
+          <div class="card-body">
+            <h6 class="card-title">
+              <a href="/posts/<%= related.slug %>" class="text-decoration-none text-dark"><%= related.title %></a>
+            </h6>
+            <small class="text-muted"><%= related.published_at ? new Date(related.published_at).toLocaleDateString('vi-VN') : '' %></small>
+          </div>
+        </div>
+      </div>
+      <% }) %>
+    </div>
+  </section>
+  <% } %>
 </div>
+
+<style>
+  .post-content {
+    font-size: 1.1rem;
+    line-height: 1.8;
+  }
+  .post-content h2, .post-content h3, .post-content h4 {
+    margin-top: 1.5rem;
+    margin-bottom: 1rem;
+    color: #0066CC;
+  }
+  .post-content ul, .post-content ol {
+    margin-bottom: 1rem;
+    padding-left: 2rem;
+  }
+  .post-content li {
+    margin-bottom: 0.5rem;
+  }
+  .post-content p {
+    margin-bottom: 1rem;
+  }
+  .post-content .alert {
+    margin: 1.5rem 0;
+  }
+  .post-content img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+  }
+  .post-content table {
+    width: 100%;
+    margin: 1rem 0;
+  }
+  .post-content table th, .post-content table td {
+    padding: 0.5rem;
+    border: 1px solid #dee2e6;
+  }
+</style>

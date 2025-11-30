@@ -58,6 +58,9 @@ router.get('/users/list', adminController.getUsers);
 // 3. Đường dẫn khóa/mở khóa tài khoản
 router.post('/users/:id/toggle-status', adminController.toggleUserStatus);
 
+// 4. Đường dẫn thay đổi role (cấp/hủy quyền bác sĩ)
+router.post('/users/:id/change-role', adminController.changeUserRole);
+
 // Upload handlers
 router.post('/posts/create', upload.single('thumbnail'), adminController.createPost);
 router.put('/posts/:id', upload.single('thumbnail'), adminController.updatePost);
